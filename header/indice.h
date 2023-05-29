@@ -5,8 +5,7 @@
 #include <string.h>
 
 typedef struct header_indice header_indice_t;
-typedef struct indice_inteiro indice_inteiro_t;
-typedef struct indice_string indice_string_t;
+typedef struct no no_t;
 
 
 /*

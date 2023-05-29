@@ -12,32 +12,109 @@
     Alunos: 
         Rafael C. G. Conrado - 13671806
         Lélio Marcos Rangel Cunha - 13673148
-
 */
 
+#define TAMANHO_PAGINA 76
+  
 
-struct header_indice{
+struct header_indice {
     char status;
-    int qtdReg;
-
+    int noRaiz;
+    int rrnProxNo;
+    int nroNiveis;
+    int nroChaves;
+    
 };
 
-struct indice_inteiro{
-    int chaveBusca;
-    long int byteOffset;
-
+struct no {
+    int nivel;
+    int n;
+    int chaves[4];
+    int byteOffset[4];
+    int decendentes[5];
 };
 
-struct indice_string{
-    char chaveBusca[13];
-    long int byteOffset;
+header_indice_t *criaHeaderIndice(){
+    header_indice_t *header = malloc(sizeof(header_indice_t));
+    
+    if(header == NULL) return NULL;
 
-};
+    header->status = '1';
+    return header;
+}
 
-/*
+
+void leituraHeader(FILE *arq_indice, header_indice_t* header_indice){
+    fread(&(header_indice->status), 1, sizeof(char), arq_indice);
+    fread(&(header_indice->noRaiz), 1, sizeof(int), arq_indice);
+    fread(&(header_indice->rrnProxNo), 1, sizeof(int), arq_indice);
+    fread(&(header_indice->nroNiveis), 1, sizeof(int), arq_indice);
+    fread(&(header_indice->nroChaves), 1, sizeof(int), arq_indice);
+
+}
+
+no_t *ler_no(FILE *arq_indice, int rrn) {
+    fseek(arq_indice, rrn*TAMANHO_PAGINA, SEEK_SET);
+
+    no_t *novo_no = (no_t*)malloc(sizeof(no_t));
+
+    fread(&(novo_no->nivel), sizeof(int), 1, arq_indice);
+    fread(&(novo_no->n), sizeof(int), 1, arq_indice);
+    
+    int i = 0;
+
+    for (i = 0; i < novo_no->n; i++) {
+        fread(&(novo_no->decendentes[i]), sizeof(int), 1, arq_indice);
+        fread(&(novo_no->chaves[i]), sizeof(int), 1, arq_indice);
+        fread(&(novo_no->byteOffset[i]), sizeof(int), 1, arq_indice);
+    }
+
+    fread(&(novo_no->decendentes[i]), sizeof(int), 1, arq_indice);
+     
+    if (i != 4) {
+        fseek(arq_indice, ((4 - novo_no->n) + 1)*sizeof(int), SEEK_CUR);
+    }
+}
+
+
+int buscar_arvoreB(header_indice_t* header_indice, int curr_rrn, FILE* arq_indice, int item) {
+    no_t *curr_no = ler_no(arq_indice, curr_rrn); 
+    
+    int i;
+
+    for (i = 0; i < curr_no->n; i++) {
+        if (curr_no->chaves[i] == item) {
+            return curr_no->byteOffset[i];
+        } else if (curr_no->chaves[i] < item) {
+            return buscar_arvoreB(header_indice, curr_no->decendentes[i], arq_indice, item);
+        }
+    }
+
+    if (i == curr_no->n) {
+        return buscar_arvoreB(header_indice, curr_no->decendentes[i], arq_indice, item);
+    }
+}
+
+void insert(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset) {
+    // busca folha
+    // se folha dá, insere
+    // se não, busca pai e o outro filho desse pai
+    // se tem espaço nesse filho, redistribui
+    //      pega valores da folha, do pai e os do filho ordenados
+    //      divide os valores o melhor possível
+    //      promove o nó como o novo pai.
+    // se não tiver espaço,
+        // se nó raiz: split 1-2
+        // senão: split 2-3
+    // insere ordenado
+}
+
+
+
+/* 
+ 
     Cria cabeçalho de arquivo de índice.
     Parâmetro:
-*/
 header_indice_t *cria_cabecalhoIndice(){
     header_indice_t *header = (header_indice_t*)malloc(sizeof(header_indice_t));
     
@@ -51,24 +128,22 @@ header_indice_t *cria_cabecalhoIndice(){
     return header;
 }
 
-/*
+ 
     Destrói o cabeçalho de arquivo de índice.
     Parâmetro:
         cabecalho_indicie -> Ponteiro de ponteiro do cabeçalho
 
-*/
 void destruir_cabecalhoIndice(header_indice_t** cabecalho_indicie) {
     free(*cabecalho_indicie);
     *cabecalho_indicie = NULL;
 }
 
-/*
+ 
     Atualiza o cabeçalho do arquivo de índices com seus valores modificados
     Parâmetro:
         arq -> ponteiro arquivo de índices
         cabecalho -> cabeçalho do arquivo de índices
 
-*/
 void atualiza_cabecalhoIndice(FILE *arq, header_indice_t *cabecalho){
     //Volta para o início do arquivo de índice
     if (ftell(arq) != 0) fseek(arq, 0, SEEK_SET);
@@ -80,11 +155,10 @@ void atualiza_cabecalhoIndice(FILE *arq, header_indice_t *cabecalho){
 
 }
 
-/*
+ 
     Cria um registro de arquivo de índices (inteiro)
     Parâmetro:
 
-*/
 indice_inteiro_t *cria_indice_inteiro(){
     indice_inteiro_t *index = (indice_inteiro_t*)malloc(sizeof(indice_inteiro_t));
 
@@ -97,11 +171,10 @@ indice_inteiro_t *cria_indice_inteiro(){
 
 }
 
-/*
+ 
     Cria um registro de arquivo de índices (string)
     Parâmetro:
 
-*/
 indice_string_t *cria_indice_string(){
     indice_string_t *index = (indice_string_t*)malloc(sizeof(indice_string_t));
 
@@ -114,7 +187,7 @@ indice_string_t *cria_indice_string(){
     
 }
 
-/*
+ 
     Abre o arquivo de índices de forma que os registros de índice
     possam ser escritos.
     Parâmetros:
@@ -122,7 +195,6 @@ indice_string_t *cria_indice_string(){
         cabecalho -> cabeçalho de índice de registros
 
 
-*/
 FILE *abreArquivoIndice_escrita(char *nomeArquivo, header_indice_t *cabecalho){
     FILE *arq = fopen(nomeArquivo, "wb");
     
@@ -138,13 +210,13 @@ FILE *abreArquivoIndice_escrita(char *nomeArquivo, header_indice_t *cabecalho){
     
 }
 
-/*
+ 
     Fecha o arquivo de índice e atualiza seu cabeçalho.
     Parâmetros:
         file -> arquivo de índices
         cabecalho -> cabeçalho do arquivo de índices
 
-*/
+  
 void fechar_arquivoIndice(FILE *file, header_indice_t *cabecalho) {
     cabecalho->status = '1';
     atualiza_cabecalhoIndice(file, cabecalho);    // Escreve essa mudança no arquivo.
@@ -152,11 +224,10 @@ void fechar_arquivoIndice(FILE *file, header_indice_t *cabecalho) {
     fclose(file);
 } 
 
-/*
+ 
     Cria um vetor de registros escolhidos de acordo com o campo indexado (int)
     Parâmetros:
 
-*/
 indice_inteiro_t **cria_vetorIndices_inteiro(){
     indice_inteiro_t **vetor_indices = (indice_inteiro_t**)malloc(sizeof(indice_inteiro_t*));
     return vetor_indices;
@@ -164,23 +235,22 @@ indice_inteiro_t **cria_vetorIndices_inteiro(){
 }
 
 
-/*
+ 
     Cria um vetor de registros escolhidos de acordo com o campo indexado (string)
     Parâmetros:
 
-*/
 indice_string_t **cria_vetorIndices_strings(){
     indice_string_t **vetor_indices = (indice_string_t**)malloc(sizeof(indice_string_t*));
     return vetor_indices;
 
 }
 
-/*
+ 
     Compara dois registros escolhidos de acordo com o campo indexado (int)
     Parâmetros:
         registroA -> Primeiro registro a ser comparado
         registroB -> Segundo registro a ser comparado
-*/
+  
 int compararIndiceInteiros (const void* registroA, const void* registroB) {
     indice_inteiro_t* indiceA = *(indice_inteiro_t**)registroA;
     indice_inteiro_t* indiceB = *(indice_inteiro_t**)registroB;
@@ -188,13 +258,13 @@ int compararIndiceInteiros (const void* registroA, const void* registroB) {
     return (indiceA->chaveBusca - indiceB->chaveBusca);
 }
 
-/*
+ 
     Compara dois registros escolhidos de acordo com o campo indexado (string)
     Parâmetros:
         registroA -> Primeiro registro a ser comparado
         registroB -> Segundo registro a ser comparado
 
-*/
+  
 int compararIndiceStrings(const void *registroA, const void *registroB) {
     indice_string_t* indiceA = *(indice_string_t**)registroA;
     indice_string_t* indiceB = *(indice_string_t**)registroB;
@@ -202,7 +272,7 @@ int compararIndiceStrings(const void *registroA, const void *registroB) {
     return strcmp(indiceA->chaveBusca, indiceB->chaveBusca);
 }
 
-/*
+ 
     Escreve no arquivo de índices a partir de um vetor já preenchido, seja ele do tipo inteiro
     ou de strings.
     Parâmetros:
@@ -211,7 +281,7 @@ int compararIndiceStrings(const void *registroA, const void *registroB) {
         vetor_str -> Vetor de registros de índice (string)
         cabecalho_indicie -> Ponteiro do cabeçalho do arquivo de índice
 
-*/
+  
 void escreve_indice(FILE* arq_index, indice_inteiro_t **vetor_int, indice_string_t** vetor_str, header_indice_t* cabecalho_indice) { 
     indice_inteiro_t* index_int = NULL;
     indice_string_t* index_str = NULL;
@@ -240,7 +310,7 @@ void escreve_indice(FILE* arq_index, indice_inteiro_t **vetor_int, indice_string
     }
 }
 
-/*
+ 
     Lê o binário original, filtra de acordo com o
     campo indexado (tipo inteiro), calcula o byteoffset de cada registro selecionado,
     ordena e escreve no arquivo de índices.
@@ -250,7 +320,7 @@ void escreve_indice(FILE* arq_index, indice_inteiro_t **vetor_int, indice_string
         arq_index -> Arquivo onde serão escritos os índices
         campo_indexado -> Campo que será utilizado para criar o arquivo de índice (apenas inteiros)
 
-*/
+  
 void escreveIndice_inteiros(header_indice_t *cabecalhoIndice, FILE *arq_binario, FILE *arq_index, char *campo_indexado){
 
     //Lendo o binario original
@@ -329,7 +399,7 @@ void escreveIndice_inteiros(header_indice_t *cabecalhoIndice, FILE *arq_binario,
 
 }
 
-/*
+ 
     Lê o binário original, filtra de acordo com o
     campo indexado (tipo inteiro), calcula o byteoffset de cada registro selecionado,
     ordena e escreve no arquivo de índices.
@@ -339,7 +409,7 @@ void escreveIndice_inteiros(header_indice_t *cabecalhoIndice, FILE *arq_binario,
         arq_index -> Arquivo onde serão escritos os índices
         campo_indexado -> Campo que será utilizado para criar o arquivo de índice (apenas inteiros)
 
-*/
+  
 void escreveIndice_strings(header_indice_t *cabecalhoIndice, FILE *arq_binario, FILE *arq_index, char *campo_indexado){
     //Lendo o binario original
     //leitura do cabecalho
@@ -486,12 +556,12 @@ void escreveIndice_strings(header_indice_t *cabecalhoIndice, FILE *arq_binario, 
 
 }
 
-/*
+ 
     Lê todos os registros do arquivo de indice (int) e salva em um vetor.
     Parâmetro:
         arq_index->Ponteiro do arquivo de índices
 
-*/
+  
 indice_inteiro_t **leitura_indicesInteiros(FILE *arq_index, header_indice_t *cabecalho_indicie){
     fread(&(cabecalho_indicie->status), 1, sizeof(char), arq_index);
 
@@ -523,12 +593,12 @@ indice_inteiro_t **leitura_indicesInteiros(FILE *arq_index, header_indice_t *cab
 
 }
 
-/*
+ 
     Lê todos os registros do arquivo de indice (string) e salva em um vetor.
     Parâmetro:
         arq_index->Ponteiro do arquivo de índices
 
-*/
+  
 indice_string_t **leitura_indicesStrings(FILE *arq_index, header_indice_t* cabecalho_indicie){
     fread(&(cabecalho_indicie->status), 1, sizeof(char), arq_index);
     
@@ -561,14 +631,14 @@ indice_string_t **leitura_indicesStrings(FILE *arq_index, header_indice_t* cabec
     return vetor;
 }
 
-/*
+ 
     Compara uma chave fornecida com a chave de busca de um registro de índices (tipo inteiro).
     Retorna o byteoffset se forem iguais e -1 se não forem.
     Parâmetros:
         ind_int -> Registro de índice de inteiro
         num -> Chave a ser comparada
 
-*/
+  
 long int compara_indicie_inteiro(indice_inteiro_t* ind_int, int num) {
     if (ind_int->chaveBusca == num) 
         return ind_int->byteOffset;
@@ -576,14 +646,14 @@ long int compara_indicie_inteiro(indice_inteiro_t* ind_int, int num) {
     return -1;
 }
 
-/*
+ 
     Compara uma chave fornecida com a chave de busca de um registro de índices (tipo string).
     Retorna o byteoffset se os 12 primeiros caracteres forem iguais e -1 se não forem.
     Parâmetros:
         ind_str -> Registro de índice de string
         num -> Chave a ser comparada
 
-*/
+  
 long int compara_indicie_string(indice_string_t* ind_str, char *str) {
     if (strncmp(ind_str->chaveBusca, str, 12) == 0) { 
         return ind_str->byteOffset;
@@ -591,23 +661,23 @@ long int compara_indicie_string(indice_string_t* ind_str, char *str) {
     return -1;
 }
 
-/*
+ 
     Retorna a quantidade de índices salva em um cabeçalho de arquivo de índice
     Parâmetros:
         cabecalho_indicie -> Cabeçalho do arquivo de índice
-*/
+  
 int retorna_quant_indicies(header_indice_t* cabecalho_indicie) {
     return cabecalho_indicie->qtdReg;
 }
 
-/*
+ 
     Insere um novo registro de índices em um vetor já preenchido
     Parâmetros:
         ind_int -> Vetor de registros de índice (inteiro)
         cabecalho_indice -> Cabeçalho do arquivo de índice
         num -> Valor da chave de busca do registro a ser inserido
         byteoffset -> Próximo byteoffset livre no arquivo de índice
-*/
+  
 void adicionar_indice_inteiro(indice_inteiro_t*** ind_int, header_indice_t* cabecalho_indicie, int num, long int byteoffset) {
     if (num == -1) return;
     
@@ -633,14 +703,14 @@ void adicionar_indice_inteiro(indice_inteiro_t*** ind_int, header_indice_t* cabe
     ((*ind_int)[p])->byteOffset = byteoffset;
 }
 
-/*
+ 
     Insere um novo registro de índices em um vetor já preenchido
     Parâmetros:
         ind_int -> Vetor de registros de índice (string)
         cabecalho_indice -> Cabeçalho do arquivo de índice
         str -> Valor da chave de busca do registro a ser inserido
         byteoffset -> Próximo byteoffset livre no arquivo de índice
-*/
+  
 void adicionar_indice_string(indice_string_t*** ind_str, header_indice_t* cabecalho_indicie, char *str, long int byteoffset) {
     if (str == NULL || strlen(str) == 0) return;
     
@@ -707,7 +777,7 @@ int buscabin_str(indice_string_t **vet_str, int tam_vetor, char *chave){
 
 
 
-/*
+ 
     Dado um byteoffset, busca e retorna a posição de um registro em um vetor de registro
     de índice (inteiro ou string)
     Parâmetro:
@@ -716,7 +786,7 @@ int buscabin_str(indice_string_t **vet_str, int tam_vetor, char *chave){
         cabecalho_indice -> Cabeçalho do arquivo de índice
         chave -> byteoffset do registro
 
-*/
+  
 int buscaPosicao_indice(indice_inteiro_t **vet_int, indice_string_t **vet_str, int tam_vetor, int chaveInt, char *chaveStr, int long byteoffset){
     
     int posicao;
@@ -765,7 +835,7 @@ int buscaPosicao_indice(indice_inteiro_t **vet_int, indice_string_t **vet_str, i
     return -1;
 }
 
-/*
+ 
     Deleta o registro do arquivo de índice de forma definitiva
     Parâmetros:
         vetor_int -> Vetor de registros de índice (inteiros)
@@ -773,7 +843,7 @@ int buscaPosicao_indice(indice_inteiro_t **vet_int, indice_string_t **vet_str, i
         byteoffset -> ByteOffset do registro no arquivo de índice
         cabecalho -> Cabeçalho do arquivo de índice
 
-*/
+  
 void deleta_crimeIndice(indice_inteiro_t ***vetor_int, indice_string_t ***vetor_str, int chaveInt, char *chaveStr, long int byteoffset, char *campo_indexado, header_indice_t *cabecalho){
     
 
@@ -821,7 +891,7 @@ void deleta_crimeIndice(indice_inteiro_t ***vetor_int, indice_string_t ***vetor_
 
 }
 
-/*
+ 
     Atualiza o arquivo de índice com os registros alterados
     Parâmetros:
         ind_int -> Vetor de registros de índice (inteiro)
@@ -833,7 +903,7 @@ void deleta_crimeIndice(indice_inteiro_t ***vetor_int, indice_string_t ***vetor_
         str -> Conteúdo da chave de busca do registro a ser alterado, caso o registro seja de string
         byteoffset_antigo -> Byteoffset antigo do registro
         byteoffset_novo -> Byteoffset novo
-*/
+  
 void atualiza_indice(indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, int num_antigo, char *str_antigo, int num, char *str, long int byteoffset_antigo, long int byteoffset) {
     // Faz a busca pelo valor usando o a chave e o byteoffset antigo
     int pos = buscaPosicao_indice(*ind_int, *ind_str, cabecalho_indice->qtdReg, num_antigo, str_antigo, byteoffset_antigo);
@@ -866,14 +936,14 @@ void atualiza_indice(indice_inteiro_t*** ind_int, indice_string_t*** ind_str, he
 }
 
 
-/*
+ 
     Desaloca o vetor de índices.
     Parâmetros:
         ind_int -> Vetor de registros de índice (inteiro)
         ind_str -> Vetor de registros de índice (inteiro)
         cabecalho -> Cabeçalho do arquivo de índice
         
-*/
+  
 void destruir_indices(indice_inteiro_t** ind_int, indice_string_t** ind_str, header_indice_t* cabecalho_indice) {
     for (int i = 0; i < cabecalho_indice->qtdReg; i++) {
         if (ind_int != NULL) free(ind_int[i]);
@@ -882,4 +952,4 @@ void destruir_indices(indice_inteiro_t** ind_int, indice_string_t** ind_str, hea
 
     if (ind_int != NULL) free(ind_int);
     else free(ind_str);
-}
+} */
