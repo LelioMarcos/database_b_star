@@ -15,7 +15,6 @@
 */
 
 #define TAMANHO_PAGINA 76
-  
 
 struct header_indice {
     char status;
@@ -23,7 +22,12 @@ struct header_indice {
     int rrnProxNo;
     int nroNiveis;
     int nroChaves;
-    
+};
+
+typedef struct valor valor_t;
+struct valor {
+    int chave;
+    int byteoffset;
 };
 
 struct no {
@@ -33,6 +37,24 @@ struct no {
     int byteOffset[4];
     int decendentes[5];
 };
+
+no_t *criaNo(int nivel){
+    no_t *novoNo = (no_t*)malloc(sizeof(no_t));
+    
+    if(novoNo == NULL) return NULL;
+
+    novoNo->nivel = 1;
+    novoNo->n = 0;
+    int i = 0;
+    for(i; i < 4; i++){
+        novoNo->chaves[i] = -1;
+        novoNo->byteOffset[i] = -1; 
+        novoNo->decendentes[i] = -1;
+    }
+    novoNo->decendentes[i] = -1;
+
+    return novoNo;
+}
 
 header_indice_t *criaHeaderIndice(){
     header_indice_t *header = malloc(sizeof(header_indice_t));
@@ -70,16 +92,33 @@ no_t *ler_no(FILE *arq_indice, int rrn) {
     }
 
     fread(&(novo_no->decendentes[i]), sizeof(int), 1, arq_indice);
-     
-    if (i != 4) {
-        fseek(arq_indice, ((4 - novo_no->n) + 1)*sizeof(int), SEEK_CUR);
-    }
 }
 
+void escreve_no(FILE *arq_indice, no_t* no, int rrn) {
+    fseek(arq_indice, rrn*TAMANHO_PAGINA, SEEK_SET);
+
+    fwrite(&(no->nivel), sizeof(int), 1, arq_indice);
+    fwrite(&(no->n), sizeof(int), 1, arq_indice);
+    
+    int i = 0;
+
+    for (i = 0; i < no->n; i++) {
+        fwrite(&(no->decendentes[i]), sizeof(int), 1, arq_indice);
+        fwrite(&(no->chaves[i]), sizeof(int), 1, arq_indice);
+        fwrite(&(no->byteOffset[i]), sizeof(int), 1, arq_indice);
+    }
+
+    fwrite(&(no->decendentes[i]), sizeof(int), 1, arq_indice);
+}
 
 int buscar_arvoreB(header_indice_t* header_indice, int curr_rrn, FILE* arq_indice, int item) {
+    if (curr_rrn == -1) {
+        return -1;
+    }
+
     no_t *curr_no = ler_no(arq_indice, curr_rrn); 
-    
+
+
     int i;
 
     for (i = 0; i < curr_no->n; i++) {
@@ -95,7 +134,148 @@ int buscar_arvoreB(header_indice_t* header_indice, int curr_rrn, FILE* arq_indic
     }
 }
 
+int e_folha(no_t* no) {
+    for (int i = 0; i < 5; i++)
+        if (no->decendentes[i] != -1) return 0;
+
+    return 1;
+}
+
+no_t *buscar_folha(FILE* arq_indice, int *curr_rrn, int item) {
+    no_t *curr_no = ler_no(arq_indice, *curr_rrn); 
+
+    if (e_folha(curr_no)) {
+        return curr_no;
+    }
+
+    int i;
+    for (i = 0; i < curr_no->n; i++) {
+        if (curr_no->chaves[i] == item) return NULL;
+        if (curr_no->chaves[i] < item) {
+            return buscar_folha(arq_indice, &(curr_no->decendentes[i]), item);
+        }
+    }
+
+    if (i == curr_no->n) {
+        return buscar_folha(arq_indice, &(curr_no->decendentes[i]), item);
+    }
+}
+
+void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no, int idCrime, int byteOffset) {
+    
+    // armazenar valores em ordem, para o split
+    valor_t valores[5]; 
+    for (int i = 0; i < 4; i++) {
+        valores[i].chave = no->chaves[i]; 
+        valores[i].byteoffset = no->byteOffset[i];
+        no->chaves[i] = -1;
+        no->byteOffset[i] = -1;
+    }
+    
+    int pos = -1;
+    for (int i = 0; i < 4 && pos != i; i++) {
+        if (valores[i].chave > idCrime) pos = i;
+    }
+
+    if (pos < 4) {
+        for (int i = 5, i < pos + 1; i--)
+            valores[i] = valores[i - 1];
+    }
+    
+    valores[pos].chave = idCrime;
+    valores[pos].byteoffset = byteOffset;
+
+    // O split será, consideirando valores {A, B, C, D, E} no split:
+    //  A B C D E
+    // <--- . --->
+    
+    // Cria no da esquerda
+    no_t *no_esquerda = criaNo(2);
+    for (int i = 0; i < 2; i++) {
+        no_esquerda->chaves[i] = valores[i].chave;
+        no_esquerda->byteOffset[i] = valores[i].byteoffset;
+    }
+
+    // Cria no da direita
+    no_t *no_direita = criaNo(2);
+    for (int i = 3; i < 5; i++) {
+        no_direita->chaves[i] = valores[i].chave;
+        no_direita->byteOffset[i] = valores[i].byteoffset;
+    }
+
+    // Promove o nó do meio
+    no->chaves[0] = valores[2].chave;
+    no->byteOffset[0] = valores[2].byteoffset;
+
+    // Adiciona os descendentes
+    no->decendentes[0] = header_indice->rrnProxNo;
+    no->decendentes[1] = header_indice->rrnProxNo + 1;
+
+    no->nivel = 2;
+
+    // Escreve os nós no arquivo.
+    escreve_no(arq_indice, no, 0);
+    escreve_no(arq_indice, no_esquerda, no->descendentes[0]);
+    escreve_no(arq_indice, no_direita, no->decendentes[1]);
+
+    header->rrnProxNo += 2;
+    header->nroNiveis++;
+    header->nroChaves += 1;
+}
+
+void split2_3(){
+    
+}
+
 void insert(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset) {
+    if (header_indice->noRaiz == -1) {
+        no_t* novo_no = criaNo(1);
+        novo_no->n = 1;
+        novo_no->chaves[0] = idCrime;
+        novo_no->byteOffset[0] = byteOffset;
+        escreve_no(arq_indice, novo_no, 0);
+        
+        header_indice->noRaiz = 0; 
+        header_indice->nroNiveis = 1; 
+        header_indice->nroChaves = 1; 
+        header_indice->rrnProxNo = 1; 
+    } else {
+        int curr_rrn = header_indice->no_raiz;
+        no_t *folha = buscar_folha(arq_indice, curr_rrn, idCrime);
+
+        // Verificar se exsite já
+        if (folha == NULL) return;
+        for (int i = 0; i < folha->n; i++) {
+            if (folha->chaves[i] == idCrime) return;
+        }
+
+
+        // Se NÃO está cheio
+        if (folha->n < 4) {
+            int pos = -1;
+            for (int i = 0; i < folha->n && pos != i; i++) {
+                if (folha->chaves[i] > idCrime) pos = i;
+            }
+
+            if (pos < folha->n) {
+                for (int i = folha->n; i < pos + 1; i--) {
+                    folha->chaves[i] = folha->chaves[i - 1];
+                    folha->byteOffset[i] = folha->byteOffset[i - 1];
+                }
+            }
+
+            folha->chaves[pos] = idCrime;
+            folha->byteOffset[pos] = byteOffset;
+            folha->n++;
+
+            header->nroChaves += 1;
+
+        } else if (curr_rrn == header_indice->noRaiz) {
+            split1_2(header_indice, arq_indice, folha, idCrime, byteOffset);
+        }
+    }
+    
+    
     // busca folha
     // se folha dá, insere
     // se não, busca pai e o outro filho desse pai
@@ -107,6 +287,9 @@ void insert(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int b
         // se nó raiz: split 1-2
         // senão: split 2-3
     // insere ordenado
+
+
+
 }
 
 
