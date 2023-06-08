@@ -7,6 +7,8 @@
 typedef struct header_indice header_indice_t;
 typedef struct no no_t;
 
+#define LEITURA 0
+#define ESCRITA 1
 
 /*
     Cria cabeçalho de arquivo de índice.
