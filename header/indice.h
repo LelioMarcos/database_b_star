@@ -10,6 +10,7 @@ typedef struct no no_t;
 #define LEITURA 0
 #define ESCRITA 1
 
+int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item);
 /*
     Cria cabeçalho de arquivo de índice.
     Parâmetro:

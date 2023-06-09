@@ -300,7 +300,7 @@ void destruir_resultado(resultado_t **result) {
         quant: Variável utilizada para controlar a quantidade de resultados
         presentes no vetor de resultados
 */
-resultado_t **buscar(FILE* arq, header_t *cabecalho, criterio_t** criterios, indice_inteiro_t** ind_int, indice_string_t** ind_str, char campo_indexado[20], int quant_ind, int m, int *quant) {
+resultado_t **buscar(FILE* arq, header_t *cabecalho, criterio_t** criterios, header_indice_t* header_indice, FILE* arq_indice, char campo_indexado[20], int m, int *quant) {
     resultado_t **result = NULL;
     *quant = 0;
 
@@ -309,23 +309,15 @@ resultado_t **buscar(FILE* arq, header_t *cabecalho, criterio_t** criterios, ind
     // Pesquisa em cada criterio
     for (int i = 0; i < m; i++) {
         // Se o campo do criteirio for indexado e for a primeiro criterio, usar o arquivo indexado
-        if (strcmp(criterios[i]->campo, campo_indexado) == 0 && i == 0) {
-            for (int j = 0; j < quant_ind; j++) {
-                long int byte;
+        if (strcmp(criterios[i]->campo, "idCrime") == 0 && i == 0) {
+            int byteoffset = busca_indice(arq_indice, header_indice, criterios[i]->valor.num);
 
-                // Compara o indice com o criteiro da busca
-                if (ind_str == NULL)
-                    byte = compara_indicie_inteiro(ind_int[j], criterios[i]->valor.num);
-                else
-                    byte = compara_indicie_string(ind_str[j], criterios[i]->valor.str); 
+            if (byteoffset != -1) {
+                fseek(arq, byteoffset, SEEK_SET);
 
-                // Se a comparação do incice retornou um byteoffset, ler o crime nele.
-                if (byte != -1) {
-                    int tam;
-                    fseek(arq, byte, SEEK_SET);
-                    crime_t *crime = leitura_crime_de_binario(arq, &tam);
-                    adicionar_resultado(&result, crime, byte, quant);
-                }
+                int tam;
+                crime_t *crime = leitura_crime_de_binario(arq, &tam);
+                adicionar_resultado(&result, crime, byteoffset, quant);
             }
         } else { // Se não é indexado
             if (i == 0) { // for primeira busca, fazer uma busca sequencial no arquivo de dados.

@@ -8,11 +8,11 @@
 #include <stdio.h>
 
 /*
-    Trabalho 1 de Organização de Arquivos
+    Trabalho 2 de Organização de Arquivos
     Alunos: 
         Rafael C. G. Conrado - 13671806
         Lélio Marcos Rangel Cunha - 13673148
-
+    Monitores: aff prefiro nem falar
         MODULARIZAR BUSCA!!!!!!!!!!
 */
 
@@ -172,6 +172,10 @@ int busca_binaria(int vet[], int len, int item) {
     return mid;
 }
 
+int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item) {
+    return buscar_arvoreB(header_indice->noRaiz, arq_indice, item);
+}
+
 int buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item) {
     if (curr_rrn == -1) {
         return -1;
@@ -230,62 +234,66 @@ no_t *buscar_pai(FILE* arq_indice, int curr_rrn, no_t *no1, int *pos){
     no_t* busca;
     
     for (i = 0; i < curr_no->n + 1; i++) {  
-        return busca_pai(arq_indice, curr_no->descendentes[i], no1);
+        return busca_pai(arq_indice, curr_no->descendentes[i], no1, flag);
     }
 }
 
 // 2 4 6 | 8 | 10 12 14
 // 2 4 6 | 8 | 10 12
-void redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *no_esq, no_t *no_dir){
-    int pos;
-    no_t *pai = buscar_pai(arq_indice, header_indice->noRaiz, no_esq, &pos);
-    
+int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *pai, no_t *no, no_t *no_irmao){
     //se n de chaves for impar
-    int tam = no_esq->n + 1 + no_dir->n;
+    int tam = no->n + 1 + no->n;
+
+    if (no_irmao->n == CONST_M - 1) {
+        return 1;
+    }
+
     valor_t valores[tam];
 
     int tamanho1 = tam / 2;
     int tamanho2 = (tam - (tam / 2)) - 1;
 
     // adicionar chaves em valores
-    for(int i = 0; i < no_esq->n; i++){
-        valores[i].chave = no_esq->chaves[i];
-        valores[i].byteoffset = no_esq->byteOffset[i];
-        no_esq->chaves[i] = -1;
-        no_esq->byteOffset[i] = -1;
+    for(int i = 0; i < no->n; i++){
+        valores[i].chave = no->chaves[i];
+        valores[i].byteoffset = no->byteOffset[i];
+        no->chaves[i] = -1;
+        no->byteOffset[i] = -1;
     }
 
-    valores[no_esq->n].chave = pai->chaves[pos];
-    valores[no_esq->n].byteoffset = pai->byteOffset[pos];
+    valores[no->n].chave = pai->chaves[pos];
+    valores[no->n].byteoffset = pai->byteOffset[pos];
 
-    for(int i = 0; i < no_dir->n; i++){
-        valores[i + no_esq->n + 1].chave = no_dir->chaves[i];
-        valores[i + no_esq->n + 1].byteoffset = no_dir->byteOffset[i];
-        no_dir->chaves[i + no_esq->n + 1] = -1;
-        no_dir->byteOffset[i + no_esq->n + 1] = -1;
+    for(int i = 0; i < no_irmao->n; i++){
+        valores[i + no->n + 1].chave = no_irmao->chaves[i];
+        valores[i + no->n + 1].byteoffset = no_irmao->byteOffset[i];
+        no_irmao->chaves[i + no->n + 1] = -1;
+        no_irmao->byteOffset[i + no->n + 1] = -1;
     }
 
     // redistribuir
 
     for (int i = 0; i < tamanho1; i++) {
-        no_esq->chaves[i] = valores[i].chave;
-        no_esq->byteOffset[i] = valores[i].byteoffset;
+        no->chaves[i] = valores[i].chave;
+        no->byteOffset[i] = valores[i].byteoffset;
     }
 
     pai->chaves[pos] = valores[tamanho1].chave; 
     pai->byteOffset[pos] = valores[tamanho1].chave; 
     
     for (int i = 0; i < tamanho2; i++) {
-        no_dir->chaves[i] = valores[i + tamanho1 + 1].chave;
-        no_dir->byteOffset[i] = valores[i + tamanho1 + 1].byteoffset;
+        no_irmao->chaves[i] = valores[i + tamanho1 + 1].chave;
+        no_irmao->byteOffset[i] = valores[i + tamanho1 + 1].byteoffset;
     } 
 
-    no_esq->n = tamanho1;
-    no_dir->n = tamanho2;
+    no->n = tamanho1;
+    no->n = tamanho2;
 
-    escreve_no(arq_indice, no_esq, no_esq->rrn);
+    escreve_no(arq_indice, no, no->rrn);
     escreve_no(arq_indice, pai, pai->rrn);
-    escreve_no(arq_indice, no_dir, no_dir->rrn);
+    escreve_no(arq_indice, no_irmao, no_irmao->rrn);
+
+    return 0;
 }
 
 
@@ -358,14 +366,12 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t *no_esq, no
     
     // add 5
     // 2 4 5 | 6 | 8 10 12 | 14 | 16 18 20 21
-    //MODULARIZAR ESSA ATROCIDADE DEPOIS
+    //MODULARIZAR ESSA ATROCIDADE DEPOIS (NAO ESQUECER)
     int pos_no_pai;
-    no_t *no_pai = buscar_pai(arq_indice, header_indice->noRaiz, no_esq, &pos_no_pai);
     valor_t valores[(CONST_M * 2) + 3];
 
 
     int tamanho_cada = 3;
-    
     for (int i = 0; i < (CONST_M - 1); i++) {
         valores[i].chave = no_esq->chaves[i];
         valores[i].byteoffset = no_esq->byteOffset[i];
@@ -418,27 +424,54 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t *no_esq, no
     no_pai->byteOffset[pos_no_pai] = valores[4].byteoffset;
     no_pai->descendentes[pos_no_pai] = no_esq->rrn;
 
-    // Verificar se pai tá cheio;
-
+    // Verifica se o nó pai está cheio e chama rotina de redistribuição;
     if (no_pai->n == CONST_M - 1) {
-        // tentar redistribuir pai
-        //   se n der_split tbm
+        rotina(header_indice, arq_indice, no_pai, valores[8].chave, valores[8].byteoffset);
+    } else {
+        shifta(no_pai->byteOffset, CONST_M - 1, pos_no_pai+1);
+        shifta(no_pai->chaves, CONST_M - 1, pos_no_pai+1);
+        shifta(no_pai->descendentes, CONST_M - 1, pos_no_pai+1);
+        no_pai->chaves[pos_no_pai + 1] = valores[8].chave; 
+        no_pai->byteOffset[pos_no_pai + 1] = valores[8].byteoffset;
     }
     
-
     //Shift
-    shifta(no_pai->chaves, CONST_M - 1, pos_no_pai+1);
-    shifta(no_pai->byteOffset, CONST_M - 1, pos_no_pai+1);
-    shifta(no_pai->descendentes, CONST_M - 1, pos_no_pai+1);
     
-    no_pai->chaves[pos_no_pai + 1] = valores[8].chave; 
-    no_pai->byteOffset[pos_no_pai + 1] = valores[8].byteoffset;
     no_pai->descendentes[pos_no_pai + 1] = no_meio->rrn;
+    no_pai->descendentes[pos_no_pai + 2] = no_dir->rrn; 
 
-    no_pai->descendentes[pos_no_pai + 2] = no_dir->rrn;
-
-    
 }
+
+void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, int byteoffset){
+    //Se o nó é raiz
+    // 
+    int pos_pai;
+    no_t *no_pai = buscar_pai(header_indice, header_indice->noRaiz, no, &pos_pai);
+
+    if (no_pai->rrn == header_indice->noRaiz) {
+        split1_2(header_indice, arq_indice, no_pai, idCrime, byteoffset);
+    } else {
+        int foi = 1;
+        no_t* no_irmao;
+        
+        if (pos_pai != 0) {
+            no_irmao = no_pai->descendentes[pos_pai - 1];
+            foi = redistribuicao(header_indice, arq_indice, no_pai, no, no_irmao);
+        } 
+        
+        if (pos_pai != no_pai->n && foi == 1) {
+            int pos;
+            no_pai = buscar_pai(header_indice, header_indice->noRaiz, no, &pos, 0);
+            no_irmao = no_pai->descendentes[pos_pai + 1];
+            foi = redistribuicao(header_indice, arq_indice, no_pai, no, no_irmao);
+        } 
+        
+        if (foi == 1) {
+            split2_3(header_indice, arq_indice, no, no_irmao, idCrime, byteoffset);
+        }
+    }
+}
+
 
 void shifta(int *array, int tamanho, int posicao){
     for(int i = tamanho-1; i > posicao; i--){
@@ -489,11 +522,11 @@ void insert(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int b
             folha->n++;
 
             header_indice->nroChaves += 1;
-
-        } else if (curr_rrn == header_indice->noRaiz) {
-            split1_2(header_indice, arq_indice, folha, idCrime, byteOffset);
+        } else {
+            rotina(header_indice, arq_indice, folha, idCrime, byteOffset);
         }
     }
+}
     
     
     // busca folha
@@ -510,7 +543,7 @@ void insert(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int b
 
 
 
-}
+//}
 
 
 
