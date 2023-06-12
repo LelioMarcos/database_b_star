@@ -190,9 +190,9 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
     header_t *header_dados = criar_cabecalho();
 
     //Abre arquivo de índice
-    FILE *arq_indice = abrir_arquivo_indice(binary_file, header_indice, 1);
+    FILE *arq_indice = abrir_arquivo_indice(arquivo_index, header_indice, 2);
     if(arq_indice == NULL){
-        printf("Falha no processamento do arquivo.\n");
+        printf("Falha no 1processamento do arquivo.\n");
         return ERRO;
     }
 

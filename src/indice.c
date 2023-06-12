@@ -64,7 +64,8 @@ FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, c
     FILE *arq; 
     
     if (tipo == LEITURA) arq = fopen(nome_arquivo, "rb");
-    else arq = fopen(nome_arquivo, "rb+");
+    else if (tipo == ESCRITA) arq = fopen(nome_arquivo, "rb+");
+    else arq = fopen(nome_arquivo, "wb");
 
     if (arq == NULL) return NULL;
 
