@@ -188,17 +188,29 @@ int busca_binaria(int vet[], int len, int item) {
     return mid;
 }
 
+void print_no(no_t* no) {
+    printf("%d\n", no->nivel);
+    printf("%d\n", no->n);
+    for (int i = 0; i < no->n; i++) {
+        printf("%d ", no->descendentes[i]);
+        printf("%d ", no->chaves[i]);
+    }
+    printf("%d\n", no->descendentes[no->n]);
+}
+
 int buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item) {
-    printf("%x\n", curr_rrn*TAMANHO_PAGINA);
+    printf("%d\n", curr_rrn);
     if (curr_rrn == -1) {
         return -1;
     }
 
     no_t *curr_no = ler_no(arq_indice, curr_rrn); 
 
+    print_no(curr_no);
+
     int pos = busca_binaria(curr_no->chaves, curr_no->n, item);
 
-    printf("%d %d\n", curr_no->chaves[pos], item);
+    printf("%d %d\n\n", curr_no->chaves[pos], item);
     if (curr_no->chaves[pos] == item) 
         return curr_no->byteOffset[pos];
     else if (item > curr_no->chaves[pos]) {
