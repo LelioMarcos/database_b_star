@@ -11,11 +11,15 @@ typedef struct no no_t;
 #define ESCRITA 1
 
 int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item);
+void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset);
+FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, char tipo);
+void fechar_arquivo_indice(FILE *arq_indice, header_indice_t *header_indice, char tipo);
+void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, int byteoffset);
 /*
     Cria cabeçalho de arquivo de índice.
     Parâmetro:
 */
-header_indice_t *cria_cabecalhoIndice();
+header_indice_t *criaHeaderIndice();
 
 
 /*
@@ -35,7 +39,7 @@ void destruir_cabecalhoIndice(header_indice_t** cabecalho_indicie);
         cabecalho -> cabeçalho do arquivo de índices
 
 */
-void atualiza_cabecalhoIndice(FILE *arq, header_indice_t *cabecalho);
+// void atualiza_cabecalhoIndice(FILE *arq, header_indice_t *cabecalho);
 
 
 /*
@@ -44,7 +48,7 @@ void atualiza_cabecalhoIndice(FILE *arq, header_indice_t *cabecalho);
     Parâmetro:
 
 */
-indice_inteiro_t *cria_indice_inteiro();
+// indice_inteiro_t *cria_indice_inteiro();
 
 
 /*
@@ -53,7 +57,7 @@ indice_inteiro_t *cria_indice_inteiro();
         Parâmetro:
 
 */
-indice_string_t *cria_indice_string();
+// indice_string_t *cria_indice_string();
 
 
 /*
@@ -64,7 +68,7 @@ indice_string_t *cria_indice_string();
         cabecalho -> cabeçalho de índice de registros
 
 */
-FILE *abreArquivoIndice_escrita(char *nomeArquivo, header_indice_t *cabecalho);
+// FILE *abreArquivoIndice_escrita(char *nomeArquivo, header_indice_t *cabecalho);
 
 
 /*
@@ -74,7 +78,7 @@ FILE *abreArquivoIndice_escrita(char *nomeArquivo, header_indice_t *cabecalho);
         cabecalho -> cabeçalho do arquivo de índices
 
 */
-void fechar_arquivoIndice(FILE *file, header_indice_t *cabecalho);
+// void fechar_arquivoIndice(FILE *file, header_indice_t *cabecalho);
 
 
 /*
@@ -82,7 +86,7 @@ void fechar_arquivoIndice(FILE *file, header_indice_t *cabecalho);
     Parâmetros:
 
 */
-indice_inteiro_t **cria_vetorIndices_inteiro();
+// indice_inteiro_t **cria_vetorIndices_inteiro();
 
 
 /*
@@ -90,7 +94,7 @@ indice_inteiro_t **cria_vetorIndices_inteiro();
     Parâmetros:
         
 */
-indice_string_t **cria_vetorIndices_strings();
+// indice_string_t **cria_vetorIndices_strings();
 
 
 /*
@@ -100,7 +104,7 @@ indice_string_t **cria_vetorIndices_strings();
         registroB -> Segundo registro a ser comparado 
 
 */
-int compararIndiceInteiros(const void* registroA, const void* registroB);
+// int compararIndiceInteiros(const void* registroA, const void* registroB);
 
 
 /*
@@ -110,7 +114,7 @@ int compararIndiceInteiros(const void* registroA, const void* registroB);
         registroB -> Segundo registro a ser comparado 
 
 */
-int compararIndiceStrings(const void *registroA, const void *registroB);
+// int compararIndiceStrings(const void *registroA, const void *registroB);
 
 
 /*
@@ -124,7 +128,7 @@ int compararIndiceStrings(const void *registroA, const void *registroB);
         campo_indexado -> Campo que será utilizado para criar o arquivo de índice (apenas inteiros)
 
 */
-void escreveIndice_inteiros(header_indice_t *header, FILE *arq_binario, FILE *arq_index, char *campo_indexado);
+// void escreveIndice_inteiros(header_indice_t *header, FILE *arq_binario, FILE *arq_index, char *campo_indexado);
 
 
 /*
@@ -138,7 +142,7 @@ void escreveIndice_inteiros(header_indice_t *header, FILE *arq_binario, FILE *ar
         campo_indexado -> Campo que será utilizado para criar o arquivo de índice (apenas strings)
 
 */
-void escreveIndice_strings(header_indice_t *header, FILE *arq_binario, FILE *arq_index, char *campo_indexado);
+// void escreveIndice_strings(header_indice_t *header, FILE *arq_binario, FILE *arq_index, char *campo_indexado);
 
 
 /*
@@ -147,7 +151,7 @@ void escreveIndice_strings(header_indice_t *header, FILE *arq_binario, FILE *arq
         arq_index->Ponteiro do arquivo de índices
 
 */
-indice_inteiro_t **leitura_indicesInteiros(FILE *arq_index, header_indice_t *cabecalho_indicie);
+// indice_inteiro_t **leitura_indicesInteiros(FILE *arq_index, header_indice_t *cabecalho_indicie);
 
 
 /*
@@ -156,7 +160,7 @@ indice_inteiro_t **leitura_indicesInteiros(FILE *arq_index, header_indice_t *cab
         arq_index->Ponteiro do arquivo de índices
 
 */
-indice_string_t **leitura_indicesStrings(FILE *arq_index, header_indice_t* cabeaclho_indicie);
+// indice_string_t **leitura_indicesStrings(FILE *arq_index, header_indice_t* cabeaclho_indicie);
 
 
 /*
@@ -166,7 +170,7 @@ indice_string_t **leitura_indicesStrings(FILE *arq_index, header_indice_t* cabea
         ind_int -> Registro de índice de inteiro
         num -> Chave a ser comparada
 */
-long int compara_indicie_inteiro(indice_inteiro_t* ind_int, int num);
+// long int compara_indicie_inteiro(indice_inteiro_t* ind_int, int num);
 
 
 /*
@@ -177,7 +181,7 @@ long int compara_indicie_inteiro(indice_inteiro_t* ind_int, int num);
         ind_str -> Registro de índice de string
         num -> Chave a ser comparada
 */
-long int compara_indicie_string(indice_string_t* ind_str, char *str);
+// long int compara_indicie_string(indice_string_t* ind_str, char *str);
 
 
 /*
@@ -187,7 +191,7 @@ long int compara_indicie_string(indice_string_t* ind_str, char *str);
             cabecalho_indicie -> Cabeçalho do arquivo de índice
 
 */
-int retorna_quant_indicies(header_indice_t* cabecalho_indicie);
+// int retorna_quant_indicies(header_indice_t* cabecalho_indicie);
 
 /*
     Escreve no arquivo de índices a partir de um vetor já preenchido, seja ele do tipo inteiro
@@ -199,7 +203,7 @@ int retorna_quant_indicies(header_indice_t* cabecalho_indicie);
         cabecalho_indicie -> Ponteiro do cabeçalho do arquivo de índice
     
 */
-void escreve_indice(FILE* arq_index, indice_inteiro_t **vetor_int, indice_string_t** vetor_str, header_indice_t* cabecalho_indice);
+// void escreve_indice(FILE* arq_index, indice_inteiro_t **vetor_int, indice_string_t** vetor_str, header_indice_t* cabecalho_indice);
 
 /*
 
@@ -212,7 +216,7 @@ void escreve_indice(FILE* arq_index, indice_inteiro_t **vetor_int, indice_string
 
 
 */
-void adicionar_indice_inteiro(indice_inteiro_t*** ind_int, header_indice_t* cabecalho_indicie, int num, long int byteoffset);
+// void adicionar_indice_inteiro(indice_inteiro_t*** ind_int, header_indice_t* cabecalho_indicie, int num, long int byteoffset);
 
 /*
     Desaloca o vetor de índices.
@@ -221,7 +225,7 @@ void adicionar_indice_inteiro(indice_inteiro_t*** ind_int, header_indice_t* cabe
         ind_str -> Vetor de registros de índice (inteiro)
         cabecalho -> Cabeçalho do arquivo de índice
 */
-void destruir_indices(indice_inteiro_t** ind_int, indice_string_t** ind_str, header_indice_t* cabecalho_indice);
+// void destruir_indices(indice_inteiro_t** ind_int, indice_string_t** ind_str, header_indice_t* cabecalho_indice);
  
 
 /*
@@ -235,7 +239,7 @@ void destruir_indices(indice_inteiro_t** ind_int, indice_string_t** ind_str, hea
 
 
 */
-void adicionar_indice_string(indice_string_t*** ind_str, header_indice_t* cabecalho_indicie, char *str, long int byteoffset);
+// void adicionar_indice_string(indice_string_t*** ind_str, header_indice_t* cabecalho_indicie, char *str, long int byteoffset);
 
 /*
     Dado um byteoffset, busca e retorna a posição de um registro em um vetor de registro 
@@ -248,12 +252,12 @@ void adicionar_indice_string(indice_string_t*** ind_str, header_indice_t* cabeca
 
 */
 
-int buscaPosicao_indice(indice_inteiro_t **vet_int, indice_string_t **vet_str, int tam_vetor, int chaveInt, char *chaveStr, int long byteoffset);
+// int buscaPosicao_indice(indice_inteiro_t **vet_int, indice_string_t **vet_str, int tam_vetor, int chaveInt, char *chaveStr, int long byteoffset);
 
 
-int buscabin_int(indice_inteiro_t **vet_int, int tam_vetor, int chave);
+// int buscabin_int(indice_inteiro_t **vet_int, int tam_vetor, int chave);
 
-int buscabin_str(indice_string_t **vet_str, int tam_vetor, char *chave);
+// int buscabin_str(indice_string_t **vet_str, int tam_vetor, char *chave);
 
 
 /*
@@ -265,7 +269,7 @@ int buscabin_str(indice_string_t **vet_str, int tam_vetor, char *chave);
         cabecalho -> Cabeçalho do arquivo de índice
 
 */
-void deleta_crimeIndice(indice_inteiro_t ***vetor_int, indice_string_t ***vetor_str, int chaveInt, char *chaveStr, long int byteoffset, char *campo_indexado, header_indice_t *cabecalho);
+// void deleta_crimeIndice(indice_inteiro_t ***vetor_int, indice_string_t ***vetor_str, int chaveInt, char *chaveStr, long int byteoffset, char *campo_indexado, header_indice_t *cabecalho);
 /*
     Deleta o registro do arquivo de índice de forma definitiva
     Parâmetros:
@@ -289,4 +293,4 @@ void deleta_crimeIndice(indice_inteiro_t ***vetor_int, indice_string_t ***vetor_
 
 
 */
-void atualiza_indice(indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, int num_antigo, char *str_antigo, int num, char *str, long int byteoffset_antigo, long int byteoffset);
+// void atualiza_indice(indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, int num_antigo, char *str_antigo, int num, char *str, long int byteoffset_antigo, long int byteoffset);

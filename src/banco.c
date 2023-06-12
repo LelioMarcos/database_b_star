@@ -21,24 +21,6 @@
 
 */
 
-
-/*
-    Função que deleta registros do arquivo de dados e de índice
-     de acordo com os critérios selecionados
-
-    Parâmetros:
-        cabecalho: Cabeçalho do arquivo de dados
-        arq: Ponteiro do arquivo binário de dados
-        arq_index: Ponteiro do arquivo de índice
-        ind_int: Vetor de registros de dados de índice (inteiros)
-        ind_str: Vetor de registros de dados de índice (strings)
-        cabecalho_indice: Cabeçalho do arquivo de índice
-        campo_indexado: Campo que será utilizado nas buscas
-        n: Número de buscas/deleções
-
-*/
-void deletar(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
-
 /*
     Função que insere registros no arquivo de dados e de índice
 
@@ -53,25 +35,7 @@ void deletar(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t**
         n: Número de buscas/inserções
 
 */
-void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
-
-
-/*
-    Função que atualiza registros no arquivo de dados e de índice
-
-    Parâmetros:
-        cabecalho: Cabeçalho do arquivo de dados
-        arq: Ponteiro do arquivo binário de dados
-        arq_index: Ponteiro do arquivo de índice
-        ind_int: Vetor de registros de dados de índice (inteiros)
-        ind_str: Vetor de registros de dados de índice (strings)
-        cabecalho_indice: Cabeçalho do arquivo de índice
-        campo_indexado: Campo que será utilizado nas buscas
-        n: Número de buscas/atualizações
-
-*/
-void atualizar(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
-
+void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
 
 /*
     Função que realiza busca sequencial ou indexada no arquivo binário, de acordo com os 
@@ -88,7 +52,7 @@ void atualizar(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t
         n: Número de buscas
 
 */
-void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t** ind_int, indice_string_t** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
+void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
 
 typedef struct criterio criterio_t;
 typedef struct resultado resultado_t;
@@ -220,36 +184,48 @@ void selecte(char *binary_file){
 
 */
 int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char arquivo_index[100]) {
-    header_indice_t *cabecalho = cria_cabecalhoIndice();
+    
+    //Cria headers 
+    header_indice_t *header_indice = criaHeaderIndice();
+    header_t *header_dados = criar_cabecalho();
 
-    FILE *arq_indice = abreArquivoIndice_escrita(arquivo_index, cabecalho);
+    //Abre arquivo de índice
+    FILE *arq_indice = abrir_arquivo_indice(binary_file, header_indice, 1);
     if(arq_indice == NULL){
         printf("Falha no processamento do arquivo.\n");
         return ERRO;
     }
 
-    FILE *arq_binario = fopen(binary_file, "rb");
+    //Abre arquivo de dados
+    FILE *arq_binario = abrir_arquivo_binario_leitura(header_dados, binary_file);
     if(arq_binario == NULL){
         printf("Falha no processamento do arquivo.\n");
         return ERRO;
     }
 
-    //Caso a indexação seja feita em relação à inteiros
-    if(strcmp(tipo_dado, "inteiro") == 0){
-        //escreveArquivoIndice_inteiros()
-        escreveIndice_inteiros(cabecalho, arq_binario, arq_indice, campo_indexado);
+    //Recebe número de registro do arquivo de dados, cria ponteiro de crime
+    //e define variável tam
+    int nroReg = retorna_nroRegArq_cabecalho(header_dados);
+    crime_t *crime = criar_crime_bin();
+    int tam = 0;
+
+    //Leitura dos registros do arquivo de dados e inserção no arquivo de índices
+    for(int i = 0; i < nroReg; i++){
+        crime = leitura_crime_de_binario(arq_binario, &tam);
+
+        if(crime_foi_removido(crime) != 1 && strcmp(campo_indexado, "idCrime") == 0){
+            int idcrime = retorna_idCrime(crime);
+            inserir_indice(header_indice, arq_indice, idcrime, tam);
+        }
     }
 
-    //Caso a indexação seja feita em relação à strings
-    if(strcmp(tipo_dado, "string")==0){
-        //escreveArquivoIndice_strings();
-        escreveIndice_strings(cabecalho, arq_binario, arq_indice, campo_indexado);
-
-    }
-
+    //arrumar esses fcloses depois
+    
+    fechar_arquivo_indice(arq_indice, header_indice, 1);
     fclose(arq_binario);
 
     binarioNaTela(arquivo_index);
+    
     return OK;
 }
 
@@ -461,8 +437,9 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
         return ERRO;
     }
 
-    FILE *arq_ind = fopen(arquivo_index, "rb");
-
+    header_indice_t* cabecalho_indice = criaHeaderIndice();
+    FILE *arq_ind = abrir_arquivo_indice(arquivo_index, cabecalho_indice, func != 4);
+    
     if (arq_ind == NULL) {
         printf("Falha no processamento do arquivo.\n");
         
@@ -473,54 +450,25 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
     }
 
     //Criando os dois vetores (apenas um será utilizado, o outro continuará como NULL)
-    indice_inteiro_t **ind_int = NULL;
-    indice_string_t **ind_str = NULL;
-
-    header_indice_t *cabecalho_indice = cria_cabecalhoIndice();
-
-
-    if (strcmp(tipo_dado, "inteiro") == 0) {
-        ind_int = leitura_indicesInteiros(arq_ind, cabecalho_indice);
-    } else {
-        ind_str = leitura_indicesStrings(arq_ind, cabecalho_indice);
-    }
-    
-    //Caso o tipo de dado não seja int ou string, retorna saída de erro
-    if (ind_int == NULL && ind_str == NULL) {
-
-        fclose(arq_ind); 
-        fechar_arquivo_escrita(arq, cabecalho);
-        destruir_cabecalho(&cabecalho);
-        destruir_cabecalhoIndice(&cabecalho_indice);
-        
-        return ERRO;
-    }
-
-    fclose(arq_ind);
 
     switch (func) {
         case 4:
-            busca(cabecalho, arq, arq_ind, ind_int, ind_str, cabecalho_indice, campo_indexado, n);
+            busca(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
             break;
         case 5:
-            deletar(cabecalho, arq, arq_ind, &ind_int, &ind_str, cabecalho_indice, campo_indexado, n); 
             break;
         case 6:
-            inserir(cabecalho, arq, arq_ind, &ind_int, &ind_str, cabecalho_indice, campo_indexado, n);
+            inserir(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
             break;
         case 7:
-            atualizar(cabecalho, arq, arq_ind, &ind_int, &ind_str, cabecalho_indice, campo_indexado, n);
-        
+            break;  
     } 
 
     //O arquivo de índice é aberto para escrita caso a funcionalidade selecionada
     //não seja a de busca
+    fechar_arquivo_indice(arq_ind, cabecalho_indice, func != 4);
     if (func != 4) {
-        arq_ind = abreArquivoIndice_escrita(arquivo_index, cabecalho_indice);
-        escreve_indice(arq_ind, ind_int, ind_str, cabecalho_indice);
-        
         fechar_arquivo_escrita(arq, cabecalho);
-        fechar_arquivoIndice(arq_ind, cabecalho_indice);
         
         binarioNaTela(binary_file);
         binarioNaTela(arquivo_index);
@@ -529,9 +477,8 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
         fclose(arq);
     }    
 
-    destruir_indices(ind_int,ind_str, cabecalho_indice);
     destruir_cabecalho(&cabecalho);
-    destruir_cabecalhoIndice(&cabecalho_indice);
+    //destruir_cabecalhoIndice(&cabecalho_indice);
 
     return OK;
 }
@@ -550,9 +497,7 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
         campo_indexado: Campo que será utilizado nas buscas
 
 */
-void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t** ind_int, indice_string_t** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
-    int quant_indicie = retorna_quant_indicies(cabecalho_indice);
-
+void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
     for (int i = 0; i < n; i++) {
         int m;
         scanf(" %d", &m);
@@ -560,7 +505,7 @@ void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t** i
         criterio_t **criterios = ler_criterios(m);
         
         int quant;
-        resultado_t **resultados = buscar(arq, cabecalho, criterios, ind_int, ind_str, campo_indexado, quant_indicie, m, &quant);
+        resultado_t **resultados = buscar(arq, cabecalho, criterios, cabecalho_indice, arq_index, campo_indexado, m, &quant);
 
         printf("Resposta para a busca %d\n", i + 1);
         if (resultados != NULL && quant != 0) {
@@ -580,44 +525,7 @@ void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t** i
     }
 }
 
-void deletar(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
-    for (int i = 0; i < n; i++) {
-        int quant_indicie = retorna_quant_indicies(cabecalho_indice);
-        int m;
-        scanf(" %d", &m);
-         
-        criterio_t **criterios = ler_criterios(m);
-        
-        int quant;
-        resultado_t **resultados = buscar(arq, cabecalho, criterios, *ind_int, *ind_str, campo_indexado, quant_indicie, m, &quant);
-       
-        if (resultados != NULL && quant != 0) {
-            for (int j = 0; j < quant; j++) {
-                
-                //Marca o registro como removido no binário original
-                //e aumenta o numero de removidos no cabeçalho
-                deleta_crime_bin(arq, resultados[j]->byteoffset);
-                aumenta_regRem(cabecalho);
-                
-                int chaveInt;
-                char *chaveStr = NULL;
-                retorna_valor_campo(resultados[j]->crime, campo_indexado, &chaveInt, &chaveStr);
-                
-                //Remove o registro no arquivo de indice
-                deleta_crimeIndice(ind_int, ind_str, chaveInt, chaveStr, resultados[j]->byteoffset, campo_indexado, cabecalho_indice);
-                
-                destruir_crime(&(resultados[j]->crime));
-                free(resultados[j]);
-            }
-        }
 
-        for (int j = 0; j < m; j++)
-            desturir_criterio(&(criterios[j]));
-
-        free(resultados);
-        free(criterios);
-    }
-}
 
 /*
     Função que insere registros no arquivo de dados e de índice
@@ -632,7 +540,7 @@ void deletar(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t**
         campo_indexado: Campo que será utilizado nas buscas
 */
 
-void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
+void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
    for (int i = 0; i < n; i++) {
         crime_t *crime = criar_crime();
         
@@ -640,96 +548,8 @@ void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t**
 
         if (i == 0) fseek(arq, byteoffset, SEEK_SET);
         escrever_crime(cabecalho, arq, crime);
-
-        int num = -1;
-        char *str = NULL;
-        retorna_valor_campo(crime, campo_indexado, &num, &str);
-
-        if (num != -1) {
-            adicionar_indice_inteiro(ind_int, cabecalho_indice, num, byteoffset);
-        } else if (str != NULL) {
-            adicionar_indice_string(ind_str, cabecalho_indice, str, byteoffset);
-        }
-    }
-}
-
-/*
-    Função que atualiza registros no arquivo de dados e de índice
-
-    Parâmetros:
-        cabecalho: Cabeçalho do arquivo de dados
-        arq: Ponteiro do arquivo binário de dados
-        arq_index: Ponteiro do arquivo de índice
-        ind_int: Vetor de registros de dados de índice (inteiros)
-        ind_str: Vetor de registros de dados de índice (strings)
-        cabecalho_indice: Cabeçalho do arquivo de índice
-        campo_indexado: Campo que será utilizado nas buscas
-*/
-void atualizar(header_t* cabecalho, FILE* arq, FILE* arq_index, indice_inteiro_t*** ind_int, indice_string_t*** ind_str, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
-    int quant_indicie = retorna_quant_indicies(cabecalho_indice);
-
-    for (int i = 0; i < n; i++) {
-        int m;
-        scanf(" %d", &m);
-        criterio_t **criterios = ler_criterios(m);
+    
         
-        int p;
-        scanf(" %d", &p);
-        criterio_t **mudancas = ler_criterios(p);
-
-        int quant;
-        resultado_t **resultados = buscar(arq, cabecalho, criterios, *ind_int, *ind_str, campo_indexado, quant_indicie, m, &quant);
-
-        if (resultados != NULL && quant != 0) {
-            for (int j = 0; j < quant; j++) {
-                fseek(arq, resultados[j]->byteoffset, SEEK_SET);
-
-                long int byteoffset = resultados[j]->byteoffset;
-
-                int tam;
-                crime_t *crime = leitura_crime_de_binario(arq, &tam);
-
-                int tamanho_antigo = tamanho_crime(crime);
-
-                int num_antigo = -1;
-                char *str_antigo = NULL;
-                retorna_valor_campo(crime, campo_indexado, &num_antigo, &str_antigo);
-
-                for (int k = 0; k < p; k++) {
-                    if (mudancas[k]->tipo == 0) atualizar_campo_int(crime, mudancas[k]->campo, mudancas[k]->valor.num);    
-                    else atualizar_campo_str(crime, mudancas[k]->campo, mudancas[k]->valor.str);
-                }
-
-                
-                long int novo_byteoffset = 0;
-                int tamanho_atual = tamanho_crime(crime);
-                fseek(arq, resultados[j]->byteoffset, SEEK_SET);
-                if (tamanho_atual > tamanho_antigo) {
-                    deleta_e_escreve(arq, cabecalho, crime, &novo_byteoffset);
-                } else { 
-                    novo_byteoffset = byteoffset;
-                    escrever_crime_por_cima(cabecalho, arq, crime);
-                    for (int i = tamanho_atual; i < tamanho_antigo; i++) {
-                        fputc('$', arq);
-                    }
-                }
-
-                int num = -1;
-                char *str = NULL;
-                retorna_valor_campo(crime, campo_indexado, &num, &str);
-
-                atualiza_indice(ind_int, ind_str, cabecalho_indice, num_antigo, str_antigo, num, str, byteoffset, novo_byteoffset);
-            }
-        }
-        
-        for (int j = 0; j < m; j++)
-            desturir_criterio(&(criterios[j]));
-
-        for (int j = 0; j < p; j++)
-            desturir_criterio(&(mudancas[j]));
-
-        free(criterios);
-        free(mudancas);
-        free(resultados);
+        inserir_indice(cabecalho_indice, arq_index, retorna_idCrime(crime), byteoffset);
     }
 }

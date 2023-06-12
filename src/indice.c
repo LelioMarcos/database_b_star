@@ -43,6 +43,23 @@ struct no {
     int descendentes[CONST_M];
 };
 
+void escreverHeader(FILE *arq_indice, header_indice_t* header_indice){
+    fseek(arq_indice, 0, SEEK_SET);
+    fwrite(&(header_indice->status), 1, sizeof(char), arq_indice);
+    fwrite(&(header_indice->noRaiz), 1, sizeof(int), arq_indice);
+    fwrite(&(header_indice->rrnProxNo), 1, sizeof(int), arq_indice);
+    fwrite(&(header_indice->nroNiveis), 1, sizeof(int), arq_indice);
+    fwrite(&(header_indice->nroChaves), 1, sizeof(int), arq_indice);
+}
+
+void leituraHeader(FILE *arq_indice, header_indice_t* header_indice){
+    fread(&(header_indice->status), 1, sizeof(char), arq_indice);
+    fread(&(header_indice->noRaiz), 1, sizeof(int), arq_indice);
+    fread(&(header_indice->rrnProxNo), 1, sizeof(int), arq_indice);
+    fread(&(header_indice->nroNiveis), 1, sizeof(int), arq_indice);
+    fread(&(header_indice->nroChaves), 1, sizeof(int), arq_indice);
+}
+
 FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, char tipo) {
     FILE *arq; 
     
@@ -82,8 +99,8 @@ no_t *criaNo(int nivel){
 
     novoNo->nivel = 1;
     novoNo->n = 0;
-    int i = 0;
-    for(i; i < CONST_M - 1; i++){
+    int i;
+    for(i = 0; i < CONST_M - 1; i++){
         novoNo->chaves[i] = -1;
         novoNo->byteOffset[i] = -1; 
         novoNo->descendentes[i] = -1;
@@ -103,22 +120,6 @@ header_indice_t *criaHeaderIndice(){
 }
 
 
-void escreverHeader(FILE *arq_indice, header_indice_t* header_indice){
-    fseek(arq_indice, 0, SEEK_SET);
-    fwrite(&(header_indice->status), 1, sizeof(char), arq_indice);
-    fwrite(&(header_indice->noRaiz), 1, sizeof(int), arq_indice);
-    fwrite(&(header_indice->rrnProxNo), 1, sizeof(int), arq_indice);
-    fwrite(&(header_indice->nroNiveis), 1, sizeof(int), arq_indice);
-    fwrite(&(header_indice->nroChaves), 1, sizeof(int), arq_indice);
-}
-
-void leituraHeader(FILE *arq_indice, header_indice_t* header_indice){
-    fread(&(header_indice->status), 1, sizeof(char), arq_indice);
-    fread(&(header_indice->noRaiz), 1, sizeof(int), arq_indice);
-    fread(&(header_indice->rrnProxNo), 1, sizeof(int), arq_indice);
-    fread(&(header_indice->nroNiveis), 1, sizeof(int), arq_indice);
-    fread(&(header_indice->nroChaves), 1, sizeof(int), arq_indice);
-}
 
 no_t *ler_no(FILE *arq_indice, int rrn) {
     fseek(arq_indice, rrn*TAMANHO_PAGINA, SEEK_SET);
@@ -137,6 +138,7 @@ no_t *ler_no(FILE *arq_indice, int rrn) {
     }
 
     fread(&(novo_no->descendentes[i]), sizeof(int), 1, arq_indice);
+    return novo_no;
 }
 
 void escreve_no(FILE *arq_indice, no_t* no, int rrn) {
@@ -172,10 +174,6 @@ int busca_binaria(int vet[], int len, int item) {
     return mid;
 }
 
-int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item) {
-    return buscar_arvoreB(header_indice->noRaiz, arq_indice, item);
-}
-
 int buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item) {
     if (curr_rrn == -1) {
         return -1;
@@ -191,6 +189,10 @@ int buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item) {
         return buscar_arvoreB(curr_no->descendentes[pos + 1], arq_indice, item);
     else
         return buscar_arvoreB(curr_no->descendentes[pos], arq_indice, item);
+}
+
+int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item) {
+    return buscar_arvoreB(header_indice->noRaiz, arq_indice, item);
 }
 
 int e_folha(no_t* no) {
@@ -211,9 +213,9 @@ no_t *buscar_folha(FILE* arq_indice, int curr_rrn, int item) {
     if (e_folha(curr_no)) return curr_no;
     
     if (item > curr_no->chaves[pos])
-        return buscar_folha(curr_no->descendentes[pos + 1], arq_indice, item);
+        return buscar_folha(arq_indice, curr_no->descendentes[pos + 1], item);
     else
-        return buscar_folha(curr_no->descendentes[pos], arq_indice, item); 
+        return buscar_folha(arq_indice, curr_no->descendentes[pos], item); 
 }
 
 no_t *buscar_pai(FILE* arq_indice, int curr_rrn, no_t *no1, int *pos){
@@ -231,16 +233,23 @@ no_t *buscar_pai(FILE* arq_indice, int curr_rrn, no_t *no1, int *pos){
         }
     }
 
-    no_t* busca;
-    
-    for (i = 0; i < curr_no->n + 1; i++) {  
-        return busca_pai(arq_indice, curr_no->descendentes[i], no1, flag);
+    for (i = 0; i < curr_no->n + 1; i++) { 
+        no_t* busca;
+        busca = buscar_pai(arq_indice, curr_no->descendentes[i], no1, pos);
+        if (busca != NULL) return busca;
     }
+
+    return NULL;
 }
 
-// 2 4 6 | 8 | 10 12 14
-// 2 4 6 | 8 | 10 12
-int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *pai, no_t *no, no_t *no_irmao){
+void shifta(int *array, int tamanho, int posicao){
+    for(int i = tamanho-1; i > posicao; i--){
+        array[i] = array[i-1];
+    }
+
+}
+
+int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *pai, int pos_pai, no_t *no, no_t *no_irmao) {
     //se n de chaves for impar
     int tam = no->n + 1 + no->n;
 
@@ -261,8 +270,8 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *pai, 
         no->byteOffset[i] = -1;
     }
 
-    valores[no->n].chave = pai->chaves[pos];
-    valores[no->n].byteoffset = pai->byteOffset[pos];
+    valores[no->n].chave = pai->chaves[pos_pai];
+    valores[no->n].byteoffset = pai->byteOffset[pos_pai];
 
     for(int i = 0; i < no_irmao->n; i++){
         valores[i + no->n + 1].chave = no_irmao->chaves[i];
@@ -278,8 +287,8 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *pai, 
         no->byteOffset[i] = valores[i].byteoffset;
     }
 
-    pai->chaves[pos] = valores[tamanho1].chave; 
-    pai->byteOffset[pos] = valores[tamanho1].chave; 
+    pai->chaves[pos_pai] = valores[tamanho1].chave; 
+    pai->byteOffset[pos_pai] = valores[tamanho1].chave; 
     
     for (int i = 0; i < tamanho2; i++) {
         no_irmao->chaves[i] = valores[i + tamanho1 + 1].chave;
@@ -362,16 +371,14 @@ void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no, int id
     header_indice->nroChaves += 1;
 }
 
-void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t *no_esq, no_t *no_dir, int idCrime, int byteOffset){
+void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* no_pai, int pos_no_pai, no_t *no_esq, no_t *no_dir, int idCrime, int byteOffset){
     
     // add 5
     // 2 4 5 | 6 | 8 10 12 | 14 | 16 18 20 21
     //MODULARIZAR ESSA ATROCIDADE DEPOIS (NAO ESQUECER)
-    int pos_no_pai;
     valor_t valores[(CONST_M * 2) + 3];
 
 
-    int tamanho_cada = 3;
     for (int i = 0; i < (CONST_M - 1); i++) {
         valores[i].chave = no_esq->chaves[i];
         valores[i].byteoffset = no_esq->byteOffset[i];
@@ -446,7 +453,7 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCr
     //Se o nó é raiz
     // 
     int pos_pai;
-    no_t *no_pai = buscar_pai(header_indice, header_indice->noRaiz, no, &pos_pai);
+    no_t *no_pai = buscar_pai(arq_indice, header_indice->noRaiz, no, &pos_pai);
 
     if (no_pai->rrn == header_indice->noRaiz) {
         split1_2(header_indice, arq_indice, no_pai, idCrime, byteoffset);
@@ -455,32 +462,26 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCr
         no_t* no_irmao;
         
         if (pos_pai != 0) {
-            no_irmao = no_pai->descendentes[pos_pai - 1];
-            foi = redistribuicao(header_indice, arq_indice, no_pai, no, no_irmao);
+            no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai - 1]);
+            foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao);
         } 
         
         if (pos_pai != no_pai->n && foi == 1) {
             int pos;
-            no_pai = buscar_pai(header_indice, header_indice->noRaiz, no, &pos, 0);
-            no_irmao = no_pai->descendentes[pos_pai + 1];
-            foi = redistribuicao(header_indice, arq_indice, no_pai, no, no_irmao);
+            no_pai = buscar_pai(arq_indice, header_indice->noRaiz, no, &pos);
+            no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai + 1]);
+            foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao);
         } 
         
         if (foi == 1) {
-            split2_3(header_indice, arq_indice, no, no_irmao, idCrime, byteoffset);
+            split2_3(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset);
         }
     }
 }
 
 
-void shifta(int *array, int tamanho, int posicao){
-    for(int i = tamanho-1; i > posicao; i--){
-        array[i] = array[i-1];
-    }
 
-}
-
-void insert(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset) {
+void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset) {
     if (header_indice->noRaiz == -1) {
         no_t* novo_no = criaNo(1);
         novo_no->n = 1;

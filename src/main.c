@@ -79,7 +79,9 @@ int main() {
         case 5:
         case 6:
         case 7:
+        case 8:
             return funcionalidade_3a7(funcionalidade);
+            break;
      }
 
      return 0;
