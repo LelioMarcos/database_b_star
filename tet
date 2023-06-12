@@ -1,1 +1,2 @@
-8 ./out/arquivos/antes/binario1.bin idCrime inteiro indice1.bin
+4 out/arquivos/antes/binario5.bin idCrime inteiro out/arquivos/antes/indice5.bin 1
+1 idCrime 1493

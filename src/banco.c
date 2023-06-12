@@ -287,10 +287,8 @@ resultado_t **buscar(FILE* arq, header_t *cabecalho, criterio_t** criterios, hea
         // Se o campo do criteirio for indexado e for a primeiro criterio, usar o arquivo indexado
         if (strcmp(criterios[i]->campo, "idCrime") == 0 && i == 0) {
             int byteoffset = busca_indice(arq_indice, header_indice, criterios[i]->valor.num);
-
             if (byteoffset != -1) {
                 fseek(arq, byteoffset, SEEK_SET);
-
                 int tam;
                 crime_t *crime = leitura_crime_de_binario(arq, &tam);
                 adicionar_resultado(&result, crime, byteoffset, quant);

@@ -1,0 +1,5 @@
+4 out/arquivos/antes/binario5.bin idCrime inteiro out/arquivos/antes/indice5.bin 4
+2 lugarCrime "SAO PAULO" idCrime 564
+1 numeroArtigo 171
+3 lugarCrime "SOROCABA" descricaoCrime "FURTO (ART. 155) - OUTROS" idCrime 1131
+2 idCrime 125 lugarCrime "ITATIBA"
