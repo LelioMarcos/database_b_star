@@ -195,7 +195,7 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
         printf("Falha no 1processamento do arquivo.\n");
         return ERRO;
     }
-
+    
     //Abre arquivo de dados
     FILE *arq_binario = abrir_arquivo_binario_leitura(header_dados, binary_file);
     if(arq_binario == NULL){

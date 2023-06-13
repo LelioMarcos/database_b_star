@@ -43,6 +43,15 @@ struct no {
     int descendentes[CONST_M];
 };
 
+void print_no(no_t* no) {
+    printf("%d\n", no->nivel);
+    printf("%d\n", no->n);
+    for (int i = 0; i < no->n; i++) {
+        printf("%d ", no->descendentes[i]);
+        printf("%d ", no->chaves[i]);
+    }
+    printf("%d\n", no->descendentes[no->n]);
+}
 void escreverHeader(FILE *arq_indice, header_indice_t* header_indice){
     fseek(arq_indice, 0, SEEK_SET);
     fwrite(&(header_indice->status), 1, sizeof(char), arq_indice);
@@ -50,6 +59,9 @@ void escreverHeader(FILE *arq_indice, header_indice_t* header_indice){
     fwrite(&(header_indice->rrnProxNo), 1, sizeof(int), arq_indice);
     fwrite(&(header_indice->nroNiveis), 1, sizeof(int), arq_indice);
     fwrite(&(header_indice->nroChaves), 1, sizeof(int), arq_indice);
+    for (int i = 0; i < 59; i++) {
+        fputc('$', arq_indice);
+    }
 }
 
 void print_header_indice(header_indice_t* header) {
@@ -61,6 +73,7 @@ void print_header_indice(header_indice_t* header) {
 }
 
 void leituraHeader(FILE *arq_indice, header_indice_t* header_indice){
+    fseek(arq_indice, 0, SEEK_SET);
     fread(&(header_indice->status), 1, sizeof(char), arq_indice);
     fread(&(header_indice->noRaiz), 1, sizeof(int), arq_indice);
     fread(&(header_indice->rrnProxNo), 1, sizeof(int), arq_indice);
@@ -97,7 +110,7 @@ FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, c
 }
 
 void fechar_arquivo_indice(FILE *arq_indice, header_indice_t *header_indice, char tipo) {
-    if (tipo == ESCRITA) {
+    if (tipo == ESCRITA || tipo == 2) {
         header_indice->status = '1';
         escreverHeader(arq_indice, header_indice);
     } 
@@ -129,45 +142,48 @@ header_indice_t *criaHeaderIndice(){
     if(header == NULL) return NULL;
 
     header->status = '1';
+    header->noRaiz = -1;
+    header->nroChaves = 0;
+    header->nroNiveis = 0;
+    header->rrnProxNo = 0;
     return header;
 }
 
 
 
 no_t *ler_no(FILE *arq_indice, int rrn) {
-    if(rrn == -1) return NULL;
-    
-    fseek(arq_indice, rrn*TAMANHO_PAGINA, SEEK_SET);
+    fseek(arq_indice, rrn*TAMANHO_PAGINA + TAMANHO_PAGINA, SEEK_SET);
 
-    no_t *novo_no = (no_t*)malloc(sizeof(no_t));
+    no_t *novo_no = criaNo(1);
 
     fread(&(novo_no->nivel), sizeof(int), 1, arq_indice);
     fread(&(novo_no->n), sizeof(int), 1, arq_indice);
     
     int i = 0;
 
-    for (i = 0; i < novo_no->n; i++) {
+    for (i = 0; i < CONST_M - 1; i++) {
         fread(&(novo_no->descendentes[i]), sizeof(int), 1, arq_indice);
         fread(&(novo_no->chaves[i]), sizeof(int), 1, arq_indice);
         fread(&(novo_no->byteOffset[i]), sizeof(long int), 1, arq_indice);
     }
 
     fread(&(novo_no->descendentes[i]), sizeof(int), 1, arq_indice);
+
     return novo_no;
 }
 
 void escreve_no(FILE *arq_indice, no_t* no, int rrn) {
-    fseek(arq_indice, rrn*TAMANHO_PAGINA, SEEK_SET);
-
+    fseek(arq_indice, rrn*TAMANHO_PAGINA + TAMANHO_PAGINA, SEEK_SET);
+    
     fwrite(&(no->nivel), sizeof(int), 1, arq_indice);
     fwrite(&(no->n), sizeof(int), 1, arq_indice);
     
     int i = 0;
 
-    for (i = 0; i < no->n; i++) {
+    for (i = 0; i < CONST_M - 1; i++) {
         fwrite(&(no->descendentes[i]), sizeof(int), 1, arq_indice);
         fwrite(&(no->chaves[i]), sizeof(int), 1, arq_indice);
-        fwrite(&(no->byteOffset[i]), sizeof(int), 1, arq_indice);
+        fwrite(&(no->byteOffset[i]), sizeof(long int), 1, arq_indice);
     }
 
     fwrite(&(no->descendentes[i]), sizeof(int), 1, arq_indice);
@@ -189,15 +205,6 @@ int busca_binaria(int vet[], int len, int item) {
     return mid;
 }
 
-void print_no(no_t* no) {
-    printf("%d\n", no->nivel);
-    printf("%d\n", no->n);
-    for (int i = 0; i < no->n; i++) {
-        printf("%d ", no->descendentes[i]);
-        printf("%d ", no->chaves[i]);
-    }
-    printf("%d\n", no->descendentes[no->n]);
-}
 
 int buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item) {
     printf("%d\n", curr_rrn);
@@ -233,7 +240,11 @@ int e_folha(no_t* no) {
 }
 
 no_t *buscar_folha(FILE* arq_indice, int curr_rrn, int item) {
-    no_t *curr_no = ler_no(arq_indice, curr_rrn); 
+    no_t *curr_no = ler_no(arq_indice, curr_rrn);
+
+    if (curr_no == NULL) {
+        return NULL;
+    } 
 
     int pos = busca_binaria(curr_no->chaves, curr_no->n, item);
 
@@ -527,7 +538,6 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCr
 
 
 void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset) {
-    print_header_indice(header_indice);
     if (header_indice->noRaiz == -1) {
         no_t* novo_no = criaNo(1);
         novo_no->n = 1;
@@ -535,20 +545,17 @@ void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrim
         novo_no->byteOffset[0] = byteOffset;
         escreve_no(arq_indice, novo_no, 0);
         
+        
         header_indice->noRaiz = 0;
         header_indice->nroNiveis = 1; 
         header_indice->nroChaves = 1; 
-        header_indice->rrnProxNo = 2*TAMANHO_PAGINA; 
+        header_indice->rrnProxNo = 2*TAMANHO_PAGINA + TAMANHO_PAGINA;
     } else {
         int curr_rrn = header_indice->noRaiz;
+        
         no_t *folha = buscar_folha(arq_indice, curr_rrn, idCrime);
-
         // Verificar se exsite já
         if (folha == NULL) return;
-        for (int i = 0; i < folha->n; i++) {
-            if (folha->chaves[i] == idCrime) return;
-        }
-
 
         // Se NÃO está cheio
         if (folha->n < CONST_M - 1) {
