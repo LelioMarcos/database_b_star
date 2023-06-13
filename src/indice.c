@@ -479,14 +479,16 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* no_pai, in
 }
 
 void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, int byteoffset){
+    
     //Se o nó é raiz
-    // 
     int pos_pai;
     no_t *no_pai = buscar_pai(arq_indice, header_indice->noRaiz, no, &pos_pai);
 
     if (no_pai->rrn == header_indice->noRaiz) {
         split1_2(header_indice, arq_indice, no_pai, idCrime, byteoffset);
-    } else {
+    } 
+    
+    else {
         int foi = 1;
         no_t* no_irmao;
         

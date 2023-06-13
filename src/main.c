@@ -29,7 +29,7 @@ int funcionalidade_3a7(int func) {
     
     int n;
     
-    if (func != 3) {
+    if (func != 3 && func != 8) {
         scanf(" %d", &n);
     }
 
