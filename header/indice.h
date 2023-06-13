@@ -14,8 +14,7 @@ int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item);
 void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset);
 FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, char tipo);
 void fechar_arquivo_indice(FILE *arq_indice, header_indice_t *header_indice, char tipo);
-void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, int byteoffset);
-/*
+void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, long int byteoffset);/*
     Cria cabeçalho de arquivo de índice.
     Parâmetro:
 */

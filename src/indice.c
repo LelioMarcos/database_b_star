@@ -77,10 +77,9 @@ FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, c
 
     if (arq == NULL) return NULL;
 
-    leituraHeader(arq, header_indice);
-
+    if (tipo != 2) leituraHeader(arq, header_indice);
     
-    if (header_indice->status == '0') {
+    if (tipo != 2 && header_indice->status == '0') {
         fclose(arq);
         return NULL;
     }
@@ -478,7 +477,9 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* no_pai, in
     //Shift
     
     no_pai->descendentes[pos_no_pai + 1] = no_meio->rrn;
-    no_pai->descendentes[pos_no_pai + 2] = no_dir->rrn; 
+    no_pai->descendentes[pos_no_pai + 2] = no_dir->rrn;
+    
+     
 
 }
 
@@ -494,7 +495,6 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCr
     
     else {
         int foi = 1;
-        int pos;
         no_t* no_irmao;
         
         
@@ -513,7 +513,7 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCr
         if (foi == 1) {
             
             //verificar se rrn da direita != -1 (não existe página à direita)
-            no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai + 1]);
+            no_irmao = ler_no(arq_indice, no_pai->descendentes[ + 1]);
             
             if(no_irmao == NULL){
                 no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai - 1]);
