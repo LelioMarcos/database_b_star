@@ -136,7 +136,7 @@ header_indice_t *criaHeaderIndice(){
 
 
 no_t *ler_no(FILE *arq_indice, int rrn) {
-    fseek(arq_indice, rrn*TAMANHO_PAGINA, SEEK_SET);
+    fseek(arq_indice, rrn*TAMANHO_PAGINA + TAMANHO_PAGINA, SEEK_SET);
 
     no_t *novo_no = (no_t*)malloc(sizeof(no_t));
 
