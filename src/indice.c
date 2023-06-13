@@ -136,6 +136,8 @@ header_indice_t *criaHeaderIndice(){
 
 
 no_t *ler_no(FILE *arq_indice, int rrn) {
+    if(rrn == -1) return NULL;
+    
     fseek(arq_indice, rrn*TAMANHO_PAGINA, SEEK_SET);
 
     no_t *novo_no = (no_t*)malloc(sizeof(no_t));
@@ -283,6 +285,7 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *pai, 
     int tam = no->n + 1 + no->n;
 
     if (no_irmao->n == CONST_M - 1) {
+        //redistribuicao nao é possivel
         return 1;
     }
 
@@ -331,6 +334,7 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, no_t *pai, 
     escreve_no(arq_indice, pai, pai->rrn);
     escreve_no(arq_indice, no_irmao, no_irmao->rrn);
 
+    //0 -> redistribuição foi possível
     return 0;
 }
 
@@ -478,7 +482,7 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* no_pai, in
 
 }
 
-void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, int byteoffset){
+void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, long int byteoffset){
     
     //Se o nó é raiz
     int pos_pai;
@@ -490,7 +494,10 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCr
     
     else {
         int foi = 1;
+        int pos;
         no_t* no_irmao;
+        
+        
         
         if (pos_pai != 0) {
             no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai - 1]);
@@ -498,13 +505,20 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCr
         } 
         
         if (pos_pai != no_pai->n && foi == 1) {
-            int pos;
-            no_pai = buscar_pai(arq_indice, header_indice->noRaiz, no, &pos);
             no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai + 1]);
             foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao);
         } 
         
+        //Redistribuição não foi possível
         if (foi == 1) {
+            
+            //verificar se rrn da direita != -1 (não existe página à direita)
+            no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai + 1]);
+            
+            if(no_irmao == NULL){
+                no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai - 1]);
+            }
+            
             split2_3(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset);
         }
     }
