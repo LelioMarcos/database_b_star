@@ -161,14 +161,13 @@ no_t *ler_no(FILE *arq_indice, int rrn) {
     
     int i = 0;
 
-    for (i = 0; i < CONST_M - 1; i++) {
+    for (i = 0; i < novo_no->n; i++) {
         fread(&(novo_no->descendentes[i]), sizeof(int), 1, arq_indice);
         fread(&(novo_no->chaves[i]), sizeof(int), 1, arq_indice);
         fread(&(novo_no->byteOffset[i]), sizeof(long int), 1, arq_indice);
     }
 
     fread(&(novo_no->descendentes[i]), sizeof(int), 1, arq_indice);
-
     return novo_no;
 }
 
@@ -205,7 +204,6 @@ int busca_binaria(int vet[], int len, int item) {
     return mid;
 }
 
-
 int buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item) {
     printf("%d\n", curr_rrn);
     if (curr_rrn == -1) {
@@ -218,12 +216,14 @@ int buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item) {
 
     int pos = busca_binaria(curr_no->chaves, curr_no->n, item);
 
-    printf("%d %d\n\n", curr_no->chaves[pos], item);
+    printf("encontrado:%d | queremos:%d\n", curr_no->chaves[pos], item);
     if (curr_no->chaves[pos] == item) 
         return curr_no->byteOffset[pos];
     else if (item > curr_no->chaves[pos]) {
+        printf("Indo para rrn %d\n\n", curr_no->descendentes[pos + 1]);
         return buscar_arvoreB(curr_no->descendentes[pos + 1], arq_indice, item);
     } else {
+        printf("Indo para rrn %d\n\n", curr_no->descendentes[pos]);
         return buscar_arvoreB(curr_no->descendentes[pos], arq_indice, item);
     }
 }
