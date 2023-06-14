@@ -189,14 +189,14 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
     header_indice_t *header_indice = criaHeaderIndice();
     header_t *header_dados = criar_cabecalho();
 
-    //Abre arquivo de índice
+    //Abre arquivo de índice para escrita (cria o arquivo)
     FILE *arq_indice = abrir_arquivo_indice(arquivo_index, header_indice, 2);
     if(arq_indice == NULL){
-        printf("Falha no 1processamento do arquivo.\n");
+        printf("Falha no processamento do arquivo.\n");
         return ERRO;
     }
     
-    //Abre arquivo de dados
+    //Abre arquivo de dados para leitura
     FILE *arq_binario = abrir_arquivo_binario_leitura(header_dados, binary_file);
     if(arq_binario == NULL){
         printf("Falha no processamento do arquivo.\n");
@@ -219,11 +219,14 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
         }
     }
 
-    //arrumar esses fcloses depois
+
+    //MUDAR ABAIXO!!!!
     
+    //Fecha os arquivos
     fechar_arquivo_indice(arq_indice, header_indice, 1);
     fclose(arq_binario);
 
+    //Printa saída
     binarioNaTela(arquivo_index);
     
     return OK;
