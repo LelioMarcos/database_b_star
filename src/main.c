@@ -94,10 +94,11 @@ int main() {
     inserir_indice(header_indice, arq_indice, 39, 1);
     inserir_indice(header_indice, arq_indice, 40, 1);
     inserir_indice(header_indice, arq_indice, 44, 1);
-    inserir_indice(header_indice, arq_indice, 48, 1);
-    inserir_indice(header_indice, arq_indice, 47, 1);
-    inserir_indice(header_indice, arq_indice, 50, 1);
+    inserir_indice(header_indice, arq_indice, 1, 1);
+    inserir_indice(header_indice, arq_indice, 2, 1);
+    inserir_indice(header_indice, arq_indice, 23, 1);
 
+    printar_nos(header_indice, arq_indice);
     fechar_arquivo_indice(arq_indice, header_indice, 2);
 
     /*

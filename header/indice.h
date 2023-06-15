@@ -10,6 +10,7 @@ typedef struct no no_t;
 #define LEITURA 0
 #define ESCRITA 1
 
+void printar_nos(header_indice_t* header_indice, FILE *arq_indice);
 int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item);
 void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset);
 FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, char tipo);

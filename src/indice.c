@@ -46,13 +46,15 @@ struct no {
 };
 
 void print_no(no_t* no) {
-    printf("%d\n", no->nivel);
-    printf("%d\n", no->n);
+    printf("Nível %d\n", no->nivel);
+    printf("N: %d\n", no->n);
+    printf("{ ");
     for (int i = 0; i < no->n; i++) {
-        printf("%d ", no->descendentes[i]);
-        printf("%d ", no->chaves[i]);
+        printf("%d <-- ", no->descendentes[i]);
+        printf("%d --> ", no->chaves[i]);
     }
-    printf("%d\n", no->descendentes[no->n]);
+    printf("%d ", no->descendentes[no->n]);
+    printf("}\n\n");
 }
 void escreverHeader(FILE *arq_indice, header_indice_t* header_indice){
     fseek(arq_indice, 0, SEEK_SET);
@@ -629,7 +631,14 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice,
     }
 }
 
-
+void printar_nos(header_indice_t* header_indice, FILE *arq_indice) {
+    for (int i = 0; i < header_indice->rrnProxNo; i++) {
+        printf("RRN: %d\n", i);
+        no_t *no = ler_no(arq_indice, i);
+        print_no(no);
+        free(no);
+    }
+}
 
 void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, 
                                         int idCrime, int byteOffset) {
