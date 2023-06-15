@@ -98,6 +98,9 @@ int main() {
     inserir_indice(header_indice, arq_indice, 2, 1);
     inserir_indice(header_indice, arq_indice, 23, 1);
     inserir_indice(header_indice, arq_indice, 50, 1);
+    inserir_indice(header_indice, arq_indice, 35, 1);
+    inserir_indice(header_indice, arq_indice, 37, 1);
+    inserir_indice(header_indice, arq_indice, 38, 1);
 
 
     printar_nos(header_indice, arq_indice);

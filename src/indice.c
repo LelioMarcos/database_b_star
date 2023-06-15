@@ -577,17 +577,19 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
         pai->descendentes[pos_pai - p + 1] = no_meio->rrn;
         if (p == 1) {
             pai->descendentes[pos_pai - p + 2] = no->rrn;
-            no_irmao->n = 3;
-            no->n = 2;
         } else {
             pai->descendentes[pos_pai - p + 2] = no_irmao->rrn;
-            no_irmao->n = 2;
-            no->n = 3;
         }
         pai->n += 1;
         escreve_no(arq_indice, pai, pai->rrn); 
     }
-
+    if (p == 1) {
+        no_irmao->n = 3;
+        no->n = 2;
+    } else {
+        no_irmao->n = 2;
+        no->n = 3;
+    }
     no_meio->n = 3;
 
     escreve_no(arq_indice, no, no->rrn); 
