@@ -396,6 +396,8 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
     free(pai);
     free(no_irmao);
 
+    header_indice->nroChaves++;
+
     //0 -> redistribuição foi possível
     return 0;
 }
@@ -454,6 +456,7 @@ void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no,
     no_t *no_irmao = criaNo(1);
     no_irmao->n = size_split2;
     no_irmao->rrn = header_indice->rrnProxNo;
+    no_irmao->nivel = no->nivel;
     for (int i = size_split1 + 1; i < size_split1 + 1 + size_split2; i++) {
         no_irmao->chaves[i - (size_split1 + 1)] = valores[i].chave;
         no_irmao->byteOffset[i - (size_split1 + 1)] = valores[i].byteoffset;
@@ -471,7 +474,7 @@ void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no,
     novo_raiz->descendentes[0] = no->rrn;
     novo_raiz->descendentes[1] = no_irmao->rrn;
 
-    novo_raiz->nivel += 1;
+    novo_raiz->nivel = no->nivel + 1;
     novo_raiz->n = 1;
 
     // Escreve os nós no arquivo.
