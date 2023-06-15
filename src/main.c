@@ -73,14 +73,30 @@ int main() {
     }
 
 
-    inserir_indice(header_indice, arq_indice, 10, 1);
     inserir_indice(header_indice, arq_indice, 5, 1);
-    inserir_indice(header_indice, arq_indice, 2, 1);
+    inserir_indice(header_indice, arq_indice, 6, 1);
     inserir_indice(header_indice, arq_indice, 7, 1);
-    inserir_indice(header_indice, arq_indice, 12, 1);
-    inserir_indice(header_indice, arq_indice, 13, 1);
+    inserir_indice(header_indice, arq_indice, 8, 1);
+    inserir_indice(header_indice, arq_indice, 10, 1);
     inserir_indice(header_indice, arq_indice, 14, 1);
     inserir_indice(header_indice, arq_indice, 15, 1);
+    inserir_indice(header_indice, arq_indice, 16, 1);
+    inserir_indice(header_indice, arq_indice, 17, 1);
+    inserir_indice(header_indice, arq_indice, 20, 1);
+    inserir_indice(header_indice, arq_indice, 22, 1);
+    inserir_indice(header_indice, arq_indice, 25, 1);
+    inserir_indice(header_indice, arq_indice, 26, 1);
+    inserir_indice(header_indice, arq_indice, 28, 1);
+    inserir_indice(header_indice, arq_indice, 30, 1);
+    inserir_indice(header_indice, arq_indice, 33, 1);
+    inserir_indice(header_indice, arq_indice, 34, 1);
+    inserir_indice(header_indice, arq_indice, 36, 1);
+    inserir_indice(header_indice, arq_indice, 39, 1);
+    inserir_indice(header_indice, arq_indice, 40, 1);
+    inserir_indice(header_indice, arq_indice, 44, 1);
+    inserir_indice(header_indice, arq_indice, 48, 1);
+    inserir_indice(header_indice, arq_indice, 47, 1);
+    inserir_indice(header_indice, arq_indice, 50, 1);
 
     fechar_arquivo_indice(arq_indice, header_indice, 2);
 
