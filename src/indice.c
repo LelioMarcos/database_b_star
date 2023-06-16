@@ -299,7 +299,7 @@ no_t *buscar_pai(FILE* arq_indice, int curr_rrn, no_t *no1, int *pos){
     return NULL;
 }
 
-void shifta(long int *array, int tamanho, int posicao){
+void shifta(int *array, int tamanho, int posicao){
     for(int i = tamanho-1; i > posicao; i--){
         array[i] = array[i-1];
     }
@@ -607,9 +607,11 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
     if (pai->n == CONST_M - 1) {
         rotina(header_indice, arq_indice, pai, valores[7].chave, valores[7].byteoffset, no_meio->rrn, p == 1 ? no->rrn : no_irmao->rrn);
     } else {
-        shifta(pai->byteOffset, CONST_M - 1, pos_pai - p +1);
-        shifta((long int *)(pai->chaves), CONST_M - 1, pos_pai - p + 1);
-        shifta((long int *)(pai->descendentes), CONST_M - 1, pos_pai - p + 1);
+        for (int i = 3; i > pos_pai - p + 1; i--) {
+            pai->byteOffset[i] = pai->byteOffset[i - 1];
+        }
+        shifta(pai->chaves, 4, pos_pai - p + 1);
+        shifta(pai->descendentes, 5, pos_pai - p + 1);
         
         pai->chaves[pos_pai - p + 1] = valores[7].chave; 
         pai->byteOffset[pos_pai - p + 1] = valores[7].byteoffset;
