@@ -101,6 +101,16 @@ int main() {
     inserir_indice(header_indice, arq_indice, 35, 1);
     inserir_indice(header_indice, arq_indice, 37, 1);
     inserir_indice(header_indice, arq_indice, 38, 1);
+    inserir_indice(header_indice, arq_indice, 41, 1);
+    inserir_indice(header_indice, arq_indice, 42, 1);
+    inserir_indice(header_indice, arq_indice, 45, 1);
+    inserir_indice(header_indice, arq_indice, 43, 1);
+    inserir_indice(header_indice, arq_indice, 47, 1);
+    inserir_indice(header_indice, arq_indice, 46, 1);
+    inserir_indice(header_indice, arq_indice, 48, 1);
+    inserir_indice(header_indice, arq_indice, 49, 1);
+    inserir_indice(header_indice, arq_indice, 51, 1);
+    inserir_indice(header_indice, arq_indice, 52, 1);
 
 
     printar_nos(header_indice, arq_indice);

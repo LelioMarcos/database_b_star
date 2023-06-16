@@ -311,7 +311,7 @@ int compara_valores(const void *a, const void *b) {
 int redistribuicao(header_indice_t *header_indice, FILE *arq_indice, 
     no_t *pai, int pos_pai, 
     no_t *no, no_t *no_irmao, 
-    int idCrime, int byteOffset) {
+    int idCrime, int byteOffset, int rrn_filho_esq, int rrn_filho_dir) {
     //se n de chaves for impar
     int tam = no->n + no_irmao->n + 2;
 
@@ -329,11 +329,11 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
     for(int i = 0; i < no->n; i++){
         valores[i].chave = no->chaves[i];
         valores[i].byteoffset = no->byteOffset[i];
-        no->chaves[i] = -1;
-        no->byteOffset[i] = -1;
+        valores[i].filho_esq = no->descendentes[i];
+        valores[i].filho_dir = no->descendentes[i + 1];
         no->descendentes[i] = -1;
     }
-
+    no->descendentes[no->n] = -1;
     int p;
     if (pos_pai - 1 >= 0 && pai->descendentes[pos_pai - 1] == no_irmao->rrn) {
         p = 1;
@@ -341,29 +341,42 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
         p = 0;
     }
 
-    valores[no->n].chave = pai->chaves[pos_pai - p];
-    valores[no->n].byteoffset = pai->byteOffset[pos_pai - p];
+
 
     for(int i = 0; i < no_irmao->n; i++){
         valores[i + no->n + 1].chave = no_irmao->chaves[i];
         valores[i + no->n + 1].byteoffset = no_irmao->byteOffset[i];
+        valores[i + no->n + 1].filho_esq = no_irmao->descendentes[i];
+        valores[i + no->n + 1].filho_dir = no_irmao->descendentes[i + 1];
         no_irmao->chaves[i] = -1;
         no_irmao->byteOffset[i] = -1;
+        no_irmao->descendentes[i] = -1;
     }
+    no_irmao->descendentes[no_irmao->n] = -1;
+    
+    valores[no->n].chave = pai->chaves[pos_pai - p];
+    valores[no->n].byteoffset = pai->byteOffset[pos_pai - p];
+    valores[no->n].filho_esq = p == 1 ? valores[no->n + no_irmao->n].filho_dir : valores[no->n - 1].filho_dir;
+    valores[no->n].filho_dir = p == 1 ? valores[no->n + no_irmao->n].filho_esq : valores[no->n - 1].filho_esq;
 
     valores[tam - 1].chave = idCrime;
     valores[tam - 1].byteoffset = byteOffset;
-
+    valores[tam - 1].filho_esq = rrn_filho_esq;
+    valores[tam - 1].filho_dir = rrn_filho_dir;
+        
     qsort(&valores, tam, sizeof(valor_t), compara_valores);
-
     // 
     for (int i = 0; i < tamanho1; i++) {
         if (pos_pai - 1 >= 0 && pai->descendentes[pos_pai - 1] == no_irmao->rrn) {
             no_irmao->chaves[i] = valores[i].chave;
             no_irmao->byteOffset[i] = valores[i].byteoffset;
+            no_irmao->descendentes[i] = valores[i].filho_esq;
+            no_irmao->descendentes[i + 1] = valores[i].filho_dir;
         } else {
             no->chaves[i] = valores[i].chave;
             no->byteOffset[i] = valores[i].byteoffset;
+            no->descendentes[i] = valores[i].filho_esq;
+            no->descendentes[i + 1] = valores[i].filho_dir;    
         }
     }
 
@@ -374,9 +387,13 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
         if (pos_pai - 1 >= 0 && pai->descendentes[pos_pai - 1] == no_irmao->rrn) {
             no->chaves[i] = valores[i + tamanho1 + 1].chave;
             no->byteOffset[i] = valores[i + tamanho1 + 1].byteoffset;
+            no->descendentes[i] = valores[i + tamanho1 + 1].filho_esq;
+            no->descendentes[i + 1] = valores[i + tamanho1 + 1].filho_dir;
         } else {
             no_irmao->chaves[i] = valores[i + tamanho1 + 1].chave;
             no_irmao->byteOffset[i] = valores[i + tamanho1 + 1].byteoffset;
+            no_irmao->descendentes[i] = valores[i + tamanho1 + 1].filho_esq;
+            no_irmao->descendentes[i + 1] = valores[i + tamanho1 + 1].filho_dir;    
         }
     } 
 
@@ -391,10 +408,6 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
     escreve_no(arq_indice, no, no->rrn);
     escreve_no(arq_indice, pai, pai->rrn);
     escreve_no(arq_indice, no_irmao, no_irmao->rrn);
-
-    free(no);
-    free(pai);
-    free(no_irmao);
 
     header_indice->nroChaves++;
 
@@ -489,7 +502,8 @@ void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no,
 }
 
 void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai, 
-    int pos_pai, no_t *no, no_t *no_irmao, int idCrime, int byteOffset){
+    int pos_pai, no_t *no, no_t *no_irmao, 
+    int idCrime, int byteOffset, int rrn_no_esq, int rrn_no_dir) {
     
     // add 5
     // 2 5 7 | 10 | 12 13 14 | 15 | 16 17
@@ -497,12 +511,16 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
     valor_t valores[10];
     
     for (int i = 0; i < 4; i++) {
+        valores[i].filho_esq = no->descendentes[i];
+        valores[i].filho_dir = no->descendentes[i + 1];
         valores[i].chave = no->chaves[i];
         valores[i].byteoffset = no->byteOffset[i];
         
         no->chaves[i] = -1;
         no->byteOffset[i] = -1;
+        no->descendentes[i] = -1;
     }
+    no->descendentes[4] = -1;
     
     int p;
     if (pos_pai - 1 >= 0 && pai->descendentes[pos_pai - 1] == no_irmao->rrn) {
@@ -512,17 +530,27 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
     }
     
     valores[4].chave = pai->chaves[pos_pai - p];
+    valores[4].byteoffset = pai->byteOffset[pos_pai - p];
 
     for (int i = 5; i < 9; i++) {
         valores[i].chave = no_irmao->chaves[i - 5];
         valores[i].byteoffset = no_irmao->byteOffset[i - 5];
-        
+        valores[i].filho_esq = no_irmao->descendentes[i - 5];
+        valores[i].filho_dir = no_irmao->descendentes[i - 5 + 1];
+
         no_irmao->chaves[i - 5] = -1;
         no_irmao->byteOffset[i - 5] = -1;
+        no_irmao->descendentes[i - 5] = -1;
     }
+    no_irmao->descendentes[4] = -1;
 
+    valores[no->n].filho_esq = p == 1 ? valores[8].filho_dir : valores[3].filho_dir;
+    valores[no->n].filho_dir = p == 1 ? valores[8].filho_esq : valores[3].filho_esq;
+    
     valores[9].chave = idCrime;
     valores[9].byteoffset = byteOffset;
+    valores[9].filho_esq = rrn_no_esq;
+    valores[9].filho_dir = rrn_no_dir;
 
     qsort(&valores, 10, sizeof(valor_t), compara_valores);
 
@@ -533,15 +561,21 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
         if (p == 1) {
             no_irmao->chaves[i] = valores[i].chave;
             no_irmao->byteOffset[i] = valores[i].byteoffset;
+            no_irmao->descendentes[i] = valores[i].filho_esq;
+            no_irmao->descendentes[i + 1] = valores[i].filho_dir;
         } else {
             no->chaves[i] = valores[i].chave;
             no->byteOffset[i] = valores[i].byteoffset;
+            no->descendentes[i] = valores[i].filho_esq;
+            no->descendentes[i + 1] = valores[i].filho_dir;
         }
     }
 
     for (int i = 4; i < 7; i++) {
         no_meio->chaves[i - 4] = valores[i].chave;
         no_meio->byteOffset[i - 4] = valores[i].byteoffset;
+        no_meio->descendentes[i - 4] = valores[i].filho_esq;
+        no_meio->descendentes[i - 4 + 1] = valores[i].filho_dir;
     }
     
 
@@ -549,14 +583,20 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
         if (p == 1) {
             no->chaves[i - 8] = valores[i].chave;
             no->byteOffset[i - 8] = valores[i].byteoffset;
+            no->descendentes[i - 8] = valores[i].filho_esq;
+            no->descendentes[i - 8 + 1] = valores[i].filho_dir;
         } else {
             no_irmao->chaves[i - 8] = valores[i].chave;
             no_irmao->byteOffset[i - 8] = valores[i].byteoffset;
+            no_irmao->descendentes[i - 8] = valores[i].filho_esq;
+            no_irmao->descendentes[i - 8 + 1] = valores[i].filho_dir;
         }
     }
     pai->chaves[pos_pai - p] = valores[3].chave; 
     pai->byteOffset[pos_pai - p] = valores[3].byteoffset;
-        
+    pai->descendentes[pos_pai - p] = valores[3].filho_esq;
+    pai->descendentes[pos_pai - p] = valores[3].filho_dir;
+ 
     if (p == 1) {
         pai->descendentes[pos_pai - p] = no_irmao->rrn;
     } else {
@@ -616,12 +656,12 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice,
         
         if (pos_pai - 1 >= 0) {
             no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai - 1]);
-            foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset);
+            foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset, rrn_filho_esq, rrn_filho_dir);
         } 
         
         if (pos_pai != no_pai->n && foi == 1) {
             no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai + 1]);
-            foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset);
+            foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset, rrn_filho_esq, rrn_filho_dir);
         } 
         
         //Redistribuição não foi possível
@@ -637,7 +677,7 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice,
                 no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai - 1]);
             }
             
-            split2_3(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset);
+            split2_3(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset, rrn_filho_esq, rrn_filho_dir);
         }
     }
 }
