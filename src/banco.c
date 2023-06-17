@@ -207,19 +207,20 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
     //e define variável tam
     int nroReg = retorna_nroRegArq_cabecalho(header_dados);
     crime_t *crime = criar_crime_bin();
-    int tam = 0;
+    int efeteu = INICIO;
 
     //Leitura dos registros do arquivo de dados e inserção no arquivo de índices
     for(int i = 0; i < nroReg; i++){
+        int tam;
         crime = leitura_crime_de_binario(arq_binario, &tam);
 
         if(crime_foi_removido(crime) != 1 && strcmp(campo_indexado, "idCrime") == 0){
             int idcrime = retorna_idCrime(crime);
-            inserir_indice(header_indice, arq_indice, idcrime, tam);
+            inserir_indice(header_indice, arq_indice, idcrime, efeteu);
         }
-    }
 
-    printar_nos(header_indice, arq_indice);
+        efeteu += tam;
+    }
 
     //MUDAR ABAIXO!!!!
     //Fecha os arquivos
@@ -453,12 +454,12 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
     //Criando os dois vetores (apenas um será utilizado, o outro continuará como NULL)
 
     switch (func) {
-        case 4:
+        case 9:
             busca(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
             break;
         case 5:
             break;
-        case 6:
+        case 10:
             inserir(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
             break;
         case 7:
@@ -549,7 +550,6 @@ void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* c
 
         if (i == 0) fseek(arq, byteoffset, SEEK_SET);
         escrever_crime(cabecalho, arq, crime);
-    
         
         inserir_indice(cabecalho_indice, arq_index, retorna_idCrime(crime), byteoffset);
     }

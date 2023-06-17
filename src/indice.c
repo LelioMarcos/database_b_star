@@ -32,7 +32,7 @@ typedef struct valor valor_t;
 struct valor {
     int filho_esq;
     int chave;
-    int byteoffset;
+    long int byteoffset;
     int filho_dir;
 };
 
@@ -51,7 +51,7 @@ void print_no(no_t* no) {
     printf("{ ");
     for (int i = 0; i < no->n; i++) {
         printf("%d <-- ", no->descendentes[i]);
-        printf("%d --> ", no->chaves[i]);
+        printf("%d,%ld --> ", no->chaves[i], no->byteOffset[i]);
     }
     printf("%d ", no->descendentes[no->n]);
     printf("}\n\n");
@@ -106,7 +106,7 @@ FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, c
     }
     if (tipo == ESCRITA || tipo == 2) {
         header_indice->status = '0';
-        header_indice->rrnProxNo = TAMANHO_PAGINA;
+        //header_indice->rrnProxNo = TAMANHO_PAGINA;
         escreverHeader(arq, header_indice);
     }
 
@@ -225,14 +225,11 @@ no_t* buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item, int *pos) {
 
     *pos = busca_binaria(curr_no->chaves, curr_no->n, item);
 
-    printf("encontrado:%d | queremos:%d\n", curr_no->chaves[*pos], item);
     if (curr_no->chaves[*pos] == item) 
         return curr_no;
     else if (item > curr_no->chaves[*pos]) {
-        printf("Indo para rrn %d\n\n", curr_no->descendentes[*pos + 1]);
         return buscar_arvoreB(curr_no->descendentes[*pos + 1], arq_indice, item, pos);
     } else {
-        printf("Indo para rrn %d\n\n", curr_no->descendentes[*pos]);
         return buscar_arvoreB(curr_no->descendentes[*pos], arq_indice, item, pos);
     }
 }
@@ -331,6 +328,8 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
         valores[i].byteoffset = no->byteOffset[i];
         valores[i].filho_esq = no->descendentes[i];
         valores[i].filho_dir = no->descendentes[i + 1];
+        no->chaves[i] = -1;
+        no->byteOffset[i] = -1;
         no->descendentes[i] = -1;
     }
     no->descendentes[no->n] = -1;
@@ -365,7 +364,11 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
     valores[tam - 1].filho_dir = rrn_filho_dir;
         
     qsort(&valores, tam, sizeof(valor_t), compara_valores);
-    // 
+    
+    for (int i = 1; i < tam; i++) {
+        valores[i].filho_esq = valores[i - 1].filho_dir;
+    }
+
     for (int i = 0; i < tamanho1; i++) {
         if (pos_pai - 1 >= 0 && pai->descendentes[pos_pai - 1] == no_irmao->rrn) {
             no_irmao->chaves[i] = valores[i].chave;
@@ -381,7 +384,7 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
     }
 
     pai->chaves[pos_pai - p] = valores[tamanho1].chave; 
-    pai->byteOffset[pos_pai - p] = valores[tamanho1].chave; 
+    pai->byteOffset[pos_pai - p] = valores[tamanho1].byteoffset; 
     
     for (int i = 0; i < tamanho2; i++) {
         if (pos_pai - 1 >= 0 && pai->descendentes[pos_pai - 1] == no_irmao->rrn) {
@@ -447,9 +450,14 @@ void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no,
     valores[CONST_M - 1].filho_dir = rrn_filho_dir;
 
     qsort(&valores, CONST_M, sizeof(valor_t), compara_valores);
-    
+
+    for (int i = 1; i < CONST_M; i++) {
+        valores[i].filho_esq = valores[i - 1].filho_dir;
+    }
+
     int size_split1 = CONST_M / 2;
     int size_split2 = (CONST_M - (CONST_M / 2)) - 1;
+
 
     // O split será, consideirando valores {A, B, C, D, E} no split:
     //  A B C D E
@@ -460,7 +468,6 @@ void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no,
     for (int i = 0; i < size_split1; i++) {
         no->chaves[i] = valores[i].chave;
         no->byteOffset[i] = valores[i].byteoffset;
-
         no->descendentes[i] = valores[i].filho_esq;
         no->descendentes[i + 1] = valores[i].filho_dir;
     }
@@ -555,7 +562,9 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
     valores[9].filho_dir = rrn_no_dir;
 
     qsort(&valores, 10, sizeof(valor_t), compara_valores);
-
+    for (int i = 1; i < 10; i++) {
+        valores[i].filho_esq = valores[i - 1].filho_dir;
+    }
     no_t *no_meio = criaNo(1);
     no_meio->rrn = header_indice->rrnProxNo;
     no_meio->nivel = no->nivel;

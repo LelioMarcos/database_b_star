@@ -33,7 +33,7 @@ int funcionalidade_3a7(int func) {
         scanf(" %d", &n);
     }
 
-    if (func >= 4 && func <= 7) {
+    if (func == 9 && func == 10) {
         return funcionalidades_index(arquivo_entrada, campo_indexado, tipo_dado, arquivo_index, n, func);
     } else {
         return indexa(arquivo_entrada, campo_indexado, tipo_dado, arquivo_index);
@@ -63,20 +63,20 @@ void funcionalidade2() {
 }
 
 int main() {
-    //*
+    /*
     header_indice_t *header_indice = criaHeaderIndice();
 
     //Abre arquivo de índice
-    FILE *arq_indice = abrir_arquivo_indice("indice1.bin", header_indice, 2);
+    FILE *arq_indice = abrir_arquivo_indice("out/arquivos/depois/indice1.bin", header_indice, LEITURA);
     if(arq_indice == NULL){
         printf("Falha no 1processamento do arquivo.\n");
         return ERRO;
     }
 
-    for (int i = 0; i < 23; i++) {
-        int a = rand() % 10000;
-        inserir_indice(header_indice, arq_indice, a, i);
-    }
+    //for (int i = 0; i < 100; i++) {
+    //    int a = rand() % 10000;
+    //    inserir_indice(header_indice, arq_indice, a, i);
+   // }
 
     printar_nos(header_indice, arq_indice);
     fechar_arquivo_indice(arq_indice, header_indice, 2);
