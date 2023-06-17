@@ -63,6 +63,7 @@ void funcionalidade2() {
 }
 
 int main() {
+    //*
     header_indice_t *header_indice = criaHeaderIndice();
 
     //Abre arquivo de índice
@@ -72,31 +73,15 @@ int main() {
         return ERRO;
     }
 
+    for (int i = 0; i < 23; i++) {
+        int a = rand() % 10000;
+        inserir_indice(header_indice, arq_indice, a, i);
+    }
 
-    inserir_indice(header_indice, arq_indice, 15, 1);
-    inserir_indice(header_indice, arq_indice, 13, 1);
-    inserir_indice(header_indice, arq_indice, 2, 1);
-    inserir_indice(header_indice, arq_indice, 8, 1);
-    inserir_indice(header_indice, arq_indice, 7, 1);
-    inserir_indice(header_indice, arq_indice, 18, 1);
-    inserir_indice(header_indice, arq_indice, 23, 1);
-    inserir_indice(header_indice, arq_indice, 25, 1);
-    inserir_indice(header_indice, arq_indice, 38, 1);
-    inserir_indice(header_indice, arq_indice, 43, 1);
-    inserir_indice(header_indice, arq_indice, 57, 1);
-    inserir_indice(header_indice, arq_indice, 9, 1);
-    inserir_indice(header_indice, arq_indice, 12, 1);
-    inserir_indice(header_indice, arq_indice, 17, 1);
-    inserir_indice(header_indice, arq_indice, 0, 1);
-    inserir_indice(header_indice, arq_indice, 5, 1);
-    inserir_indice(header_indice, arq_indice, 6, 1);
-    inserir_indice(header_indice, arq_indice, 4, 1);
-    inserir_indice(header_indice, arq_indice, 3, 1);
     printar_nos(header_indice, arq_indice);
-
     fechar_arquivo_indice(arq_indice, header_indice, 2);
-
-    /*
+    /*/
+    
     int funcionalidade;
     scanf("%d", &funcionalidade);
 
@@ -116,8 +101,6 @@ int main() {
             return funcionalidade_3a7(funcionalidade);
             break;
      }
-
+    //*/
      return 0;
-    */
-    
 }

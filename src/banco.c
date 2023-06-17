@@ -219,9 +219,9 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
         }
     }
 
+    printar_nos(header_indice, arq_indice);
 
     //MUDAR ABAIXO!!!!
-    
     //Fecha os arquivos
     fechar_arquivo_indice(arq_indice, header_indice, 1);
     fclose(arq_binario);
