@@ -78,8 +78,6 @@ int main() {
         case 10:
             return funcionalidade_3a10(funcionalidade);
             break;
-        default:
-            printf("Funcionalidade inválida.\n");
      }
     return 0;
 }
