@@ -14,7 +14,7 @@
 
 */
 
-int funcionalidade_3a7(int func) {
+int funcionalidade_3a10(int func) {
     char arquivo_entrada[100];
     scanf("%s", (char *)arquivo_entrada);
     
@@ -33,7 +33,7 @@ int funcionalidade_3a7(int func) {
         scanf(" %d", &n);
     }
 
-    if (func == 9 && func == 10) {
+    if (func == 9 || func == 10) {
         return funcionalidades_index(arquivo_entrada, campo_indexado, tipo_dado, arquivo_index, n, func);
     } else {
         return indexa(arquivo_entrada, campo_indexado, tipo_dado, arquivo_index);
@@ -98,7 +98,9 @@ int main() {
         case 6:
         case 7:
         case 8:
-            return funcionalidade_3a7(funcionalidade);
+        case 9:
+        case 10:
+            return funcionalidade_3a10(funcionalidade);
             break;
      }
     //*/

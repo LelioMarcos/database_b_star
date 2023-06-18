@@ -214,14 +214,11 @@ int busca_binaria(int vet[], int len, int item) {
 }
 
 no_t* buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item, int *pos) {
-    printf("%d\n", curr_rrn);
     if (curr_rrn == -1) {
         return NULL;
     }
 
     no_t *curr_no = ler_no(arq_indice, curr_rrn); 
-
-    print_no(curr_no);
 
     *pos = busca_binaria(curr_no->chaves, curr_no->n, item);
 

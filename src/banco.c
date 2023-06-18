@@ -428,7 +428,7 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
     //Abertura do arquivo binário e obtenção do número de registros
     FILE *arq;
     
-    if (func != 4) {
+    if (func == 10) {
         arq = abrir_arq_leitura_escrita(cabecalho, binary_file);
     } else {
         arq = abrir_arquivo_binario_leitura(cabecalho, binary_file);
@@ -440,7 +440,7 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
     }
 
     header_indice_t* cabecalho_indice = criaHeaderIndice();
-    FILE *arq_ind = abrir_arquivo_indice(arquivo_index, cabecalho_indice, func != 4);
+    FILE *arq_ind = abrir_arquivo_indice(arquivo_index, cabecalho_indice, func == 10);
     
     if (arq_ind == NULL) {
         printf("Falha no processamento do arquivo.\n");
@@ -457,19 +457,15 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
         case 9:
             busca(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
             break;
-        case 5:
-            break;
         case 10:
             inserir(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
             break;
-        case 7:
-            break;  
     } 
 
     //O arquivo de índice é aberto para escrita caso a funcionalidade selecionada
     //não seja a de busca
-    fechar_arquivo_indice(arq_ind, cabecalho_indice, func != 4);
-    if (func != 4) {
+    fechar_arquivo_indice(arq_ind, cabecalho_indice, func == 10);
+    if (func == 10) {
         fechar_arquivo_escrita(arq, cabecalho);
         
         binarioNaTela(binary_file);
