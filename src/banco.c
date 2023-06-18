@@ -35,7 +35,7 @@
         n: Número de buscas/inserções
 
 */
-void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
+void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int i);
 
 /*
     Função que realiza busca sequencial ou indexada no arquivo binário, de acordo com os 
@@ -52,7 +52,7 @@ void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* c
         n: Número de buscas
 
 */
-void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n);
+void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int i);
 
 typedef struct criterio criterio_t;
 typedef struct resultado resultado_t;
@@ -190,7 +190,7 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
     header_t *header_dados = criar_cabecalho();
 
     //Abre arquivo de índice para escrita (cria o arquivo)
-    FILE *arq_indice = abrir_arquivo_indice(arquivo_index, header_indice, 2);
+    FILE *arq_indice = abrir_arquivo_indice(arquivo_index, header_indice, INDICE_CRIACAO);
     if(arq_indice == NULL){
         printf("Falha no processamento do arquivo.\n");
         return ERRO;
@@ -453,14 +453,16 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
 
     //Criando os dois vetores (apenas um será utilizado, o outro continuará como NULL)
 
-    switch (func) {
-        case 9:
-            busca(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
-            break;
-        case 10:
-            inserir(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, n);
-            break;
-    } 
+    for (int i = 0; i < n; i++) {
+        switch (func) {
+            case 9:
+                busca(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, i);
+                break;
+            case 10:
+                inserir(cabecalho, arq, arq_ind, cabecalho_indice, campo_indexado, i);
+                break;
+        }
+    }
 
     //O arquivo de índice é aberto para escrita caso a funcionalidade selecionada
     //não seja a de busca
@@ -470,7 +472,6 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
         
         binarioNaTela(binary_file);
         binarioNaTela(arquivo_index);
-
     } else {
         fclose(arq);
     }    
@@ -495,32 +496,30 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
         campo_indexado: Campo que será utilizado nas buscas
 
 */
-void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
-    for (int i = 0; i < n; i++) {
-        int m;
-        scanf(" %d", &m);
-         
-        criterio_t **criterios = ler_criterios(m);
+void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int i) {
+    int m;
+    scanf(" %d", &m);
         
-        int quant;
-        resultado_t **resultados = buscar(arq, cabecalho, criterios, cabecalho_indice, arq_index, campo_indexado, m, &quant);
+    criterio_t **criterios = ler_criterios(m);
+    
+    int quant;
+    resultado_t **resultados = buscar(arq, cabecalho, criterios, cabecalho_indice, arq_index, campo_indexado, m, &quant);
 
-        printf("Resposta para a busca %d\n", i + 1);
-        if (resultados != NULL && quant != 0) {
-            for (int j = 0; j < quant; j++) {
-                printa_crime_bin(resultados[j]->crime);
-                destruir_resultado(&(resultados[j]));
-            }
-        } else {
-            printf("Registro inexistente.\n");
+    printf("Resposta para a busca %d\n", i + 1);
+    if (resultados != NULL && quant != 0) {
+        for (int j = 0; j < quant; j++) {
+            printa_crime_bin(resultados[j]->crime);
+            destruir_resultado(&(resultados[j]));
         }
-
-        for (int j = 0; j < m; j++)
-            desturir_criterio(&(criterios[j]));
-
-        free(resultados);
-        free(criterios);
+    } else {
+        printf("Registro inexistente.\n");
     }
+
+    for (int j = 0; j < m; j++)
+        desturir_criterio(&(criterios[j]));
+
+    free(resultados);
+    free(criterios);
 }
 
 
@@ -538,15 +537,13 @@ void busca(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cab
         campo_indexado: Campo que será utilizado nas buscas
 */
 
-void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int n) {
-   for (int i = 0; i < n; i++) {
-        crime_t *crime = criar_crime();
-        
-        long int byteoffset = retorna_proxByteOffset_cabecalho(cabecalho);
+void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* cabecalho_indice, char campo_indexado[20], int i) {
+    crime_t *crime = criar_crime();
+    
+    long int byteoffset = retorna_proxByteOffset_cabecalho(cabecalho);
 
-        if (i == 0) fseek(arq, byteoffset, SEEK_SET);
-        escrever_crime(cabecalho, arq, crime);
-        
-        inserir_indice(cabecalho_indice, arq_index, retorna_idCrime(crime), byteoffset);
-    }
+    if (i == 0) fseek(arq, byteoffset, SEEK_SET);
+    escrever_crime(cabecalho, arq, crime);
+    
+    inserir_indice(cabecalho_indice, arq_index, retorna_idCrime(crime), byteoffset);
 }

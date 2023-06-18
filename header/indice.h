@@ -6,10 +6,13 @@
 
 typedef struct header_indice header_indice_t;
 typedef struct no no_t;
+typedef struct valor valor_t;
 
-#define LEITURA 0
-#define ESCRITA 1
+#define INDICE_LEITURA 0
+#define INDICE_ESCRITA 1
+#define INDICE_CRIACAO 3
 
+valor_t *preenche_valores(no_t *no, no_t *no_pai, no_t *no_irmao, valor_t valor_novo, int pos_pai, int p);
 void printar_nos(header_indice_t* header_indice, FILE *arq_indice);
 int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item);
 void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset);

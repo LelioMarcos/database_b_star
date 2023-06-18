@@ -63,25 +63,6 @@ void funcionalidade2() {
 }
 
 int main() {
-    /*
-    header_indice_t *header_indice = criaHeaderIndice();
-
-    //Abre arquivo de índice
-    FILE *arq_indice = abrir_arquivo_indice("out/arquivos/depois/indice1.bin", header_indice, LEITURA);
-    if(arq_indice == NULL){
-        printf("Falha no 1processamento do arquivo.\n");
-        return ERRO;
-    }
-
-    //for (int i = 0; i < 100; i++) {
-    //    int a = rand() % 10000;
-    //    inserir_indice(header_indice, arq_indice, a, i);
-   // }
-
-    printar_nos(header_indice, arq_indice);
-    fechar_arquivo_indice(arq_indice, header_indice, 2);
-    /*/
-    
     int funcionalidade;
     scanf("%d", &funcionalidade);
 
@@ -92,17 +73,13 @@ int main() {
         case 2:
             funcionalidade2();
             break;
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
         case 8:
         case 9:
         case 10:
             return funcionalidade_3a10(funcionalidade);
             break;
+        default:
+            printf("Funcionalidade inválida.\n");
      }
-    //*/
-     return 0;
+    return 0;
 }
