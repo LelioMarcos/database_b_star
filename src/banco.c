@@ -205,22 +205,21 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
     //Recebe número de registro do arquivo de dados, cria ponteiro de crime
     //e define variável tam
     int nroReg = retorna_nroRegArq_cabecalho(header_dados);
-    crime_t *crime = criar_crime_bin();
-    int efeteu = INICIO;
+    long int posicao_arquivo = INICIO;
 
     //Leitura dos registros do arquivo de dados e inserção no arquivo de índices
     for(int i = 0; i < nroReg; i++){
         int tam;
-        crime = leitura_crime_de_binario(arq_binario, &tam);
+        crime_t *crime = leitura_crime_de_binario(arq_binario, &tam);
 
         if(crime_foi_removido(crime) != 1 && strcmp(campo_indexado, "idCrime") == 0){
             int idcrime = retorna_idCrime(crime);
-            inserir_indice(header_indice, arq_indice, idcrime, efeteu);
+            inserir_indice(header_indice, arq_indice, idcrime, posicao_arquivo);
         }
 
         destruir_crime(&crime);
 
-        efeteu += tam;
+        posicao_arquivo += tam;
     }
 
     //MUDAR ABAIXO!!!!
@@ -292,7 +291,7 @@ resultado_t **buscar(FILE* arq, header_t *cabecalho, criterio_t** criterios, hea
     for (int i = 0; i < m; i++) {
         // Se o campo do criteirio for indexado e for a primeiro criterio, usar o arquivo indexado
         if (strcmp(criterios[i]->campo, "idCrime") == 0 && i == 0) {
-            int byteoffset = busca_indice(arq_indice, header_indice, criterios[i]->valor.num);
+            long int byteoffset = busca_indice(arq_indice, header_indice, criterios[i]->valor.num);
             if (byteoffset != -1) {
                 fseek(arq, byteoffset, SEEK_SET);
                 int tam;

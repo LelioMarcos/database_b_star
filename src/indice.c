@@ -374,13 +374,17 @@ no_t* buscar_arvoreB(int curr_rrn, FILE* arq_indice, int item, int *pos,
 
     Retorno: byteoffset no arquivo de dados em que a chave está.
 */
-int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item) {
+long int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item) {
     int pos;
     no_t *no = buscar_arvoreB(header_indice->noRaiz, arq_indice, item, &pos, no_igual_item);
     
     if (no == NULL) return -1;
 
-    return no->byteOffset[pos];
+    long int byteoffset = no->byteOffset[pos];
+
+    free(no);
+
+    return byteoffset;
 }
 
 /*
@@ -798,7 +802,7 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice,
         byteOffset -> Byteoffset do registro do arquivo de dados
 */
 void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, 
-                                        int idCrime, int byteOffset) {
+                                        int idCrime, long int byteOffset) {
     
     //Caso a árvore 'ainda não tenha sido criada' (raiz nula)
     if (header_indice->noRaiz == -1) {

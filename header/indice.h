@@ -14,8 +14,8 @@ typedef struct valor valor_t;
 
 valor_t *preenche_valores(no_t *no, no_t *no_pai, no_t *no_irmao, valor_t valor_novo, int pos_pai, int p);
 void printar_nos(header_indice_t* header_indice, FILE *arq_indice);
-int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item);
-void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, int byteOffset);
+long int busca_indice(FILE* arq_indice, header_indice_t *header_indice, int item);
+void inserir_indice(header_indice_t* header_indice, FILE* arq_indice, int idCrime, long int byteOffset);
 FILE *abrir_arquivo_indice(char *nome_arquivo, header_indice_t* header_indice, char tipo);
 void fechar_arquivo_indice(FILE *arq_indice, header_indice_t *header_indice, char tipo);
 void rotina(header_indice_t *header_indice, FILE *arq_indice, no_t* no, int idCrime, long int byteoffset, int rrn_filho_esq, int rrn_filho_dir);/*
