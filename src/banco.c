@@ -14,11 +14,10 @@
 #define INICIOIndices  0x05 
 
 /*
-    Trabalho 1 de Organização de Arquivos
+    Trabalho 2 de Organização de Arquivos
     Alunos: 
         Rafael C. G. Conrado - 13671806
         Lélio Marcos Rangel Cunha - 13673148
-
 */
 
 /*
@@ -405,6 +404,7 @@ criterio_t **ler_criterios(int m) {
 
     return criterios;
 }
+
 void desturir_criterio(criterio_t** criterio) {
     if ((*criterio)->tipo == 1) free((*criterio)->valor.str);
     free(*criterio);
@@ -418,14 +418,13 @@ void desturir_criterio(criterio_t** criterio) {
         binary_file: Nome do arquivo binário
         campo_indexado: Campo que será/foi indexado
         tipo_dado: Tipo do dado usado (inteiro ou string)
-        index_file: nome 
+        arquivo_index: nome do arquivo de indice
         n: Quantidade de buscas que serão realizadas
         func: Inteiro correspondente ao número da funcionalidade que será chamada
 */
 int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_dado[20], char arquivo_index[100], int n, int func) {
     header_t *cabecalho = criar_cabecalho();
 
-    //Abertura do arquivo binário e obtenção do número de registros
     FILE *arq;
     
     if (func == 10) {
@@ -464,8 +463,8 @@ int funcionalidades_index(char *binary_file, char campo_indexado[20], char tipo_
         }
     }
 
-    //O arquivo de índice é aberto para escrita caso a funcionalidade selecionada
-    //não seja a de busca
+    // O arquivo de índice é aberto para escrita caso a funcionalidade selecionada
+    // seja a inserção.
     fechar_arquivo_indice(arq_ind, cabecalho_indice, func == 10);
     if (func == 10) {
         fechar_arquivo_escrita(arq, cabecalho);

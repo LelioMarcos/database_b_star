@@ -7,11 +7,10 @@
 #include "../header/arquivo.h"
 
 /*
-    Trabalho 1 de Organização de Arquivos
+    Trabalho 2 de Organização de Arquivos
     Alunos: 
         Rafael C. G. Conrado - 13671806
         Lélio Marcos Rangel Cunha - 13673148
-
 */
 
 int funcionalidade_3a10(int func) {
