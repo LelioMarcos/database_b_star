@@ -669,9 +669,9 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
     //Cria e preenche o vetor de valores
     valor_t *valores = preenche_valores(no, pai, no_irmao, valor_novo, pos_pai, sentido_pai);
     
-    no_t *no_meio = criaNo();
-    no_meio->rrn = header_indice->rrnProxNo;
-    no_meio->nivel = no->nivel;
+    no_t *novo_no = criaNo();
+    novo_no->rrn = header_indice->rrnProxNo;
+    novo_no->nivel = no->nivel;
     header_indice->rrnProxNo++; 
 
     if (sentido_pai == 1) {
@@ -682,7 +682,7 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
         preencher_no_valores(no_irmao, valores, 3, 4);
     }
    
-    preencher_no_valores(no_meio, valores, 2, 8);
+    preencher_no_valores(novo_no, valores, 2, 8);
 
     pai->chaves[pos_pai - sentido_pai] = valores[3].chave; 
     pai->byteOffset[pos_pai - sentido_pai] = valores[3].byteoffset;
@@ -695,7 +695,7 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
 
     // Verifica se o nó pai está cheio e chama rotina de redistribuição;
     if (pai->n == CONST_M - 1) {
-        rotina(header_indice, arq_indice, pai, valores[7].chave, valores[7].byteoffset, sentido_pai == 1 ? no->rrn : no_irmao->rrn, no_meio->rrn);
+        rotina(header_indice, arq_indice, pai, valores[7].chave, valores[7].byteoffset, sentido_pai == 1 ? no->rrn : no_irmao->rrn, novo_no->rrn);
         header_indice->nroChaves--;
     } else {
         for (int i = 3; i > pos_pai - sentido_pai + 1; i--) {
@@ -707,7 +707,7 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
         pai->chaves[pos_pai - sentido_pai + 1] = valores[7].chave; 
         pai->byteOffset[pos_pai - sentido_pai + 1] = valores[7].byteoffset;
 
-        pai->descendentes[pos_pai - sentido_pai + 2] = no_meio->rrn;
+        pai->descendentes[pos_pai - sentido_pai + 2] = novo_no->rrn;
         
         if (sentido_pai == 1) {
             pai->descendentes[pos_pai - sentido_pai + 1] = no->rrn;
@@ -719,15 +719,15 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
     }
     no_irmao->n = 3;
     no->n = 3;
-    no_meio->n = 2;
+    novo_no->n = 2;
 
     free(valores);
 
     escreve_no(arq_indice, no, no->rrn); 
     escreve_no(arq_indice, no_irmao, no_irmao->rrn); 
-    escreve_no(arq_indice, no_meio, no_meio->rrn);
+    escreve_no(arq_indice, novo_no, novo_no->rrn);
 
-    free(no_meio);
+    free(novo_no);
 }
 
 /*
