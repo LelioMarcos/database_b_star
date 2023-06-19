@@ -413,7 +413,10 @@ no_t *buscar_pai(FILE* arq_indice, int curr_rrn, no_t *no, int *pos){
     no_t *curr_no = ler_no(arq_indice, curr_rrn);
 
     // Se for folha, não terá filhos.
-    if (e_folha(curr_no)) return NULL;
+    if (e_folha(curr_no)) {
+        free(curr_no);
+        return NULL;
+    }
 
     // Pessquisa se o rrn dos descendentes é igual ao rrn do no.
     int i;
@@ -428,7 +431,11 @@ no_t *buscar_pai(FILE* arq_indice, int curr_rrn, no_t *no, int *pos){
     for (i = 0; i < curr_no->n + 1; i++) { 
         no_t* busca;
         busca = buscar_pai(arq_indice, curr_no->descendentes[i], no, pos);
-        if (busca != NULL) return busca;
+        if (busca != NULL) {
+            free(curr_no);
+            return busca;
+        }
+        free(busca);
     }
 
     free(curr_no);
@@ -545,10 +552,11 @@ int redistribuicao(header_indice_t *header_indice, FILE *arq_indice,
         no_irmao->n = tamanho2;
     }
 
+    free(valores);
+
     escreve_no(arq_indice, no, no->rrn);
     escreve_no(arq_indice, pai, pai->rrn);
     escreve_no(arq_indice, no_irmao, no_irmao->rrn);
-
 
     //0 -> redistribuição foi possível
     return 0;
@@ -607,16 +615,19 @@ void split1_2(header_indice_t *header_indice, FILE* arq_indice, no_t *no,
     novo_raiz->nivel = no->nivel + 1;
     novo_raiz->n = 1;
 
-
+    free(valores);
     // Escreve os nós no arquivo.
     escreve_no(arq_indice, novo_raiz, novo_raiz->rrn);
     escreve_no(arq_indice, no, novo_raiz->descendentes[0]);
     escreve_no(arq_indice, no_irmao, novo_raiz->descendentes[1]);
 
+
     header_indice->rrnProxNo += 2;
     header_indice->noRaiz = novo_raiz->rrn;
     header_indice->nroNiveis++;
     header_indice->nroChaves += 1;
+    free(no_irmao);
+    free(novo_raiz);
 }
 
 /*
@@ -706,9 +717,13 @@ void split2_3(header_indice_t *header_indice, FILE* arq_indice, no_t* pai,
     no->n = 3;
     no_meio->n = 2;
 
+    free(valores);
+
     escreve_no(arq_indice, no, no->rrn); 
     escreve_no(arq_indice, no_irmao, no_irmao->rrn); 
     escreve_no(arq_indice, no_meio, no_meio->rrn);
+
+    free(no_meio);
 }
 
 /*
@@ -739,7 +754,7 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice,
     else {
         no_t *no_pai = buscar_pai(arq_indice, header_indice->noRaiz, no, &pos_pai);
         int foi = 1;
-        no_t* no_irmao;
+        no_t* no_irmao = NULL;
         
         if (pos_pai - 1 >= 0) {
             no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai - 1]);
@@ -747,6 +762,7 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice,
         } 
         
         if (pos_pai != no_pai->n && foi == 1) {
+            if (no_irmao != NULL) free(no_irmao);
             no_irmao = ler_no(arq_indice, no_pai->descendentes[pos_pai + 1]);
             foi = redistribuicao(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset, rrn_filho_esq, rrn_filho_dir);
         } 
@@ -766,6 +782,9 @@ void rotina(header_indice_t *header_indice, FILE *arq_indice,
             
             split2_3(header_indice, arq_indice, no_pai, pos_pai, no, no_irmao, idCrime, byteoffset, rrn_filho_esq, rrn_filho_dir);
         }
+
+        free(no_pai);
+        free(no_irmao);
     }
 }
 
@@ -789,6 +808,7 @@ void inserir_indice(header_indice_t* header_indice, FILE* arq_indice,
         novo_no->byteOffset[0] = byteOffset;
         escreve_no(arq_indice, novo_no, 0);
         
+        free(novo_no);
         header_indice->noRaiz = 0;
         header_indice->nroNiveis = 1; 
         header_indice->nroChaves = 1; 
@@ -829,13 +849,13 @@ void inserir_indice(header_indice_t* header_indice, FILE* arq_indice,
 
             //Escreve o 'novo' nó no arquivo de índices
             escreve_no(arq_indice, folha, folha->rrn);
-            free(folha);
         } 
         
         //Caso o nó esteja cheio, a rotina de redistribuição é chamada
         else { 
             rotina(header_indice, arq_indice, folha, idCrime, byteOffset, -1, -1);
         }
+        free(folha);
     }
 }
 

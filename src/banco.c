@@ -218,13 +218,16 @@ int indexa(char *binary_file, char campo_indexado[20], char tipo_dado[20], char 
             inserir_indice(header_indice, arq_indice, idcrime, efeteu);
         }
 
+        destruir_crime(&crime);
+
         efeteu += tam;
     }
 
     //MUDAR ABAIXO!!!!
     //Fecha os arquivos
-    fechar_arquivo_indice(arq_indice, header_indice, 1);
+    fechar_arquivo_indice(arq_indice, header_indice, INDICE_CRIACAO);
     fclose(arq_binario);
+    destruir_cabecalho(&header_dados);
 
     //Printa saída
     binarioNaTela(arquivo_index);
