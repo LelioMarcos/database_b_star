@@ -547,4 +547,6 @@ void inserir(header_t* cabecalho, FILE* arq, FILE* arq_index, header_indice_t* c
     escrever_crime(cabecalho, arq, crime);
     
     inserir_indice(cabecalho_indice, arq_index, retorna_idCrime(crime), byteoffset);
+
+    destruir_crime(&crime);
 }
