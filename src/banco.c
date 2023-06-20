@@ -289,7 +289,7 @@ resultado_t **buscar(FILE* arq, header_t *cabecalho, criterio_t** criterios, hea
     
     // Pesquisa em cada criterio
     for (int i = 0; i < m; i++) {
-        // Se o campo do criteirio for indexado e for a primeiro criterio, usar o arquivo indexado
+        // Se o campo do criterio for indexado e for o primeiro criterio, usar o arquivo indexado
         if (strcmp(criterios[i]->campo, "idCrime") == 0 && i == 0) {
             long int byteoffset = busca_indice(arq_indice, header_indice, criterios[i]->valor.num);
             if (byteoffset != -1) {
