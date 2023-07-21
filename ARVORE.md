@@ -55,5 +55,5 @@ busca(A, rrn, item)
 ```
 
 ## Referências
-- https://pt.wikipedia.org/wiki/%C3%81rvore_B*
+- [https://pt.wikipedia.org/wiki/%C3%81rvore_B*](https://pt.wikipedia.org/wiki/%C3%81rvore_B*)
 - FOLK, Michael; ZOELLICK, Bill; File Structures
